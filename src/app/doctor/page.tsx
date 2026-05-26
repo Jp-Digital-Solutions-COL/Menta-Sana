@@ -187,13 +187,13 @@ export default async function DoctorPage() {
     <div className="min-h-screen bg-muted/30">
       {/* Barra de navegación */}
       <header className="border-b bg-background sticky top-0 z-10">
-        <div className="flex items-center gap-3 px-4 h-12 max-w-5xl mx-auto">
+        <div className="flex items-center gap-3 px-4 h-32 max-w-5xl mx-auto">
           <Image
             src="/Menta-Sana_sin_slogan.png"
             alt="Menta Sana"
-            width={140}
-            height={32}
-            className="h-10 w-auto"
+            width={420}
+            height={96}
+            className="h-[120px] w-auto"
             unoptimized
             priority
           />
