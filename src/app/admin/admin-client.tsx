@@ -277,9 +277,9 @@ export default function AdminClient({
           <Image
             src="/Menta-Sana_solo_logo.png"
             alt="Menta Sana"
-            width={72}
-            height={72}
-            className="h-12 sm:h-16 w-auto shrink-0"
+            width={120}
+            height={120}
+            className="h-20 sm:h-28 w-auto shrink-0"
             priority
           />
           <div className="min-w-0">
