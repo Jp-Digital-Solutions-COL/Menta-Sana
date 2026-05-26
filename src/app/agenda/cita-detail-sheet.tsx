@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { updateEstado, reagendar, deleteCita, getHorasDisponibles, sendConfirmacionEmail, getUbicacionParaCita } from "./actions";
 import type { CitaConRel, EstadoCita } from "./types";
 import { ESTADO_CONFIG } from "./types";
-import { durationMinutes, formatTime, toDateStr } from "./utils";
+import { durationMinutes, formatTime, toDateStr, bogotaToISO } from "./utils";
 import {
   Sheet,
   SheetContent,
@@ -115,7 +115,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
     setLoadingSlots(true);
     setReschedHora("");
     const [y, mo, d] = reschedFecha.split("-").map(Number);
-    getHorasDisponibles(cita.doctor_id, reschedFecha, new Date(y, mo - 1, d).toISOString(), cita.id).then(
+    getHorasDisponibles(cita.doctor_id, reschedFecha, bogotaToISO(y, mo, d, 0, 0), cita.id).then(
       ({ slots }) => { setReschedSlots(slots); setLoadingSlots(false); }
 
     );
@@ -140,8 +140,8 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
     setError("");
     const [ry, rm, rd] = reschedFecha.split("-").map(Number);
     const [rh, rmin] = reschedHora.split(":").map(Number);
-    const newStart = new Date(ry, rm - 1, rd, rh, rmin);
-    const r = await reagendar(cita.id, newStart.toISOString(), new Date(newStart.getTime() + reschedDur * 60000).toISOString());
+    const newISOStart = bogotaToISO(ry, rm, rd, rh, rmin);
+    const r = await reagendar(cita.id, newISOStart, new Date(new Date(newISOStart).getTime() + reschedDur * 60000).toISOString());
     setSaving(false);
     if (r.error) { setError(r.error); }
     else { await onUpdate(); onClose(); }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { bloquearHoras } from "./actions";
 import type { DoctorBasic } from "./types";
-import { toDateStr } from "./utils";
+import { toDateStr, bogotaToISO } from "./utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,8 +81,8 @@ export default function BloquearHorasDialog({
     const [fh, ffm] = horaFin.split(":").map(Number);
     const result = await bloquearHoras({
       doctorId,
-      inicioISO: new Date(fy, fm - 1, fd, ih, im).toISOString(),
-      finISO: new Date(fy, fm - 1, fd, fh, ffm).toISOString(),
+      inicioISO: bogotaToISO(fy, fm, fd, ih, im),
+      finISO: bogotaToISO(fy, fm, fd, fh, ffm),
       motivo,
     });
     setSaving(false);

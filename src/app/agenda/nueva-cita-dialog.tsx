@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createCita, createPaciente, getHorasDisponibles, getUbicacionesParaCita } from "./actions";
 import type { DoctorBasic, PacienteBasic } from "./types";
 import { TIPOS_DOCUMENTO } from "./types";
-import { toDateStr } from "./utils";
+import { toDateStr, bogotaToISO } from "./utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,7 +100,7 @@ export default function NuevaCitaDialog({
     if (!doctorId || !fecha) { setSlots([]); return; }
     setLoadingSlots(true);
     const [y, mo, d] = fecha.split("-").map(Number);
-    const dayStartISO = new Date(y, mo - 1, d).toISOString();
+    const dayStartISO = bogotaToISO(y, mo, d, 0, 0);
     getHorasDisponibles(doctorId, fecha, dayStartISO).then(({ slots: s, duracionCita }) => {
       setSlots(s);
       if (duracionCita) setDuracion(duracionCita);
@@ -143,12 +143,13 @@ export default function NuevaCitaDialog({
     setError("");
     const [fy, fm, fd] = fecha.split("-").map(Number);
     const [fh, fmin] = hora.split(":").map(Number);
-    const inicioDate = new Date(fy, fm - 1, fd, fh, fmin, 0);
+    const inicioISO = bogotaToISO(fy, fm, fd, fh, fmin);
+    const finISO = new Date(new Date(inicioISO).getTime() + duracion * 60000).toISOString();
     const result = await createCita({
       doctorId,
       pacienteId: selectedPaciente.id,
-      inicioISO: inicioDate.toISOString(),
-      finISO: new Date(inicioDate.getTime() + duracion * 60000).toISOString(),
+      inicioISO,
+      finISO,
       motivo,
       ubicacionId: ubicacionId || null,
       meetLink: isVirtual ? meetLink : null,
