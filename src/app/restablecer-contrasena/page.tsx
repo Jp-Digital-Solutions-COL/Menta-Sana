@@ -84,7 +84,7 @@ export default function RestablecerContrasenaPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="flex flex-col items-center gap-8 w-full max-w-md">
         <Image
-          src="/Med-Agenda_sin_fondo.png"
+          src="/Menta-Sana-completo.png"
           alt="Med-Agenda"
           width={840}
           height={330}

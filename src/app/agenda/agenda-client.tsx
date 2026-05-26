@@ -221,7 +221,7 @@ export default function AgendaClient({
         {/* Inicio */}
         <Link href="/inicio" title="Ir al inicio">
           <Image
-            src="/Med-Agenda_solo_logo.png"
+            src="/Menta-Sana_solo_logo.png"
             alt="Med-Agenda"
             width={32}
             height={32}
@@ -450,7 +450,7 @@ export default function AgendaClient({
         {/* Marca de agua */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
           <Image
-            src="/Med-Agenda_solo_logo.png"
+            src="/Menta-Sana_solo_logo.png"
             alt=""
             width={420}
             height={420}

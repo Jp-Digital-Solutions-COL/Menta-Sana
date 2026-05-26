@@ -54,7 +54,7 @@ export default function PacientesClient({ pacientes }: Props) {
       <div className="flex items-center justify-between">
         <Link href="/inicio">
           <Image
-            src="/Med-Agenda_sin_slogan.png"
+            src="/Menta-Sana_sin_slogan.png"
             alt="Med-Agenda"
             width={140}
             height={32}

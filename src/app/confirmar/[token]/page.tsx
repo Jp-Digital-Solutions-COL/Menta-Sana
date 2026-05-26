@@ -62,7 +62,7 @@ export default async function ConfirmarCitaPage({ params }: PageProps) {
         {/* Header teal */}
         <div className="bg-[#0D9488] px-8 py-6 flex justify-center">
           <Image
-            src="/Med-Agenda_sin_slogan.png"
+            src="/Menta-Sana_sin_slogan.png"
             alt="Med-Agenda"
             width={160}
             height={40}

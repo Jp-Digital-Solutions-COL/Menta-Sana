@@ -275,7 +275,7 @@ export default function AdminClient({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-3">
           <Image
-            src="/Med-Agenda_solo_logo.png"
+            src="/Menta-Sana_solo_logo.png"
             alt="Med-Agenda"
             width={72}
             height={72}

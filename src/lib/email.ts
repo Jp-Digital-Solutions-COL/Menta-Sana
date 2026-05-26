@@ -32,7 +32,7 @@ export async function sendConfirmacionCita(params: {
   const intro = params.intro ?? "le recordamos los detalles de su próxima cita";
   const { tokenConfirmacion, consultorioNombre, consultorioDireccion, consultorioTelefono, consultorioMapsUrl } = params;
 
-  const fotoSrc = fotoUrl ?? `${APP_URL}/Med-Agenda_solo_logo.png`;
+  const fotoSrc = fotoUrl ?? `${APP_URL}/Menta-Sana_solo_logo.png`;
   const isLogoFallback = !fotoUrl;
 
   const html = `<!DOCTYPE html>
@@ -51,7 +51,7 @@ export async function sendConfirmacionCita(params: {
           <!-- Header -->
           <tr>
             <td style="background:#0D9488;padding:24px 32px;text-align:center;">
-              <img src="${APP_URL}/Med-Agenda_sin_slogan.png" alt="Med-Agenda" height="36"
+              <img src="${APP_URL}/Menta-Sana_sin_slogan.png" alt="Med-Agenda" height="36"
                 style="height:36px;width:auto;display:inline-block;" />
             </td>
           </tr>

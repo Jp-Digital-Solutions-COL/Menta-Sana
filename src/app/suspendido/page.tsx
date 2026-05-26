@@ -24,7 +24,7 @@ export default async function SuspendidoPage() {
       <div className="max-w-sm w-full text-center space-y-6">
         <div className="flex justify-center">
           <Image
-            src="/Med-Agenda_solo_logo.png"
+            src="/Menta-Sana_solo_logo.png"
             alt="Med-Agenda"
             width={72}
             height={72}

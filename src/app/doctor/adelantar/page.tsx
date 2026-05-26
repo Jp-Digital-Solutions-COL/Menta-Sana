@@ -54,7 +54,7 @@ export default async function DoctorAdelatarPage() {
       <header className="border-b bg-background sticky top-0 z-10">
         <div className="flex items-center gap-3 px-4 h-12 max-w-5xl mx-auto">
           <Image
-            src="/Med-Agenda_sin_slogan.png"
+            src="/Menta-Sana_sin_slogan.png"
             alt="Med-Agenda"
             width={140}
             height={32}
