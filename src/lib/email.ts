@@ -1,8 +1,6 @@
 import { Resend } from "resend";
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
-
-const FROM = process.env.RESEND_FROM_EMAIL ?? "Med-Agenda <onboarding@resend.dev>";
+const FROM = process.env.RESEND_FROM_EMAIL ?? "Menta Sana <onboarding@resend.dev>";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -177,6 +175,7 @@ export async function sendConfirmacionCita(params: {
 </body>
 </html>`;
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const { error } = await resend.emails.send({
     from: FROM,
     to,
