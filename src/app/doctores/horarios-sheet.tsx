@@ -56,7 +56,6 @@ export default function HorariosSheet({ doctor, onClose }: Props) {
   useEffect(() => {
     if (!doctor) {
       setForm({});
-      setUbicaciones([]);
       return;
     }
     setLoading(true);
