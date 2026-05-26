@@ -112,7 +112,6 @@ export async function saveHorarios(
       hora_fin: d.hora_fin,
       almuerzo_inicio: d.almuerzo_inicio || null,
       almuerzo_fin: d.almuerzo_fin || null,
-      ubicacion_id: d.ubicacion_id || null,
     }));
 
   // Eliminar todos y reinsertar (estrategia simple y atómica)
@@ -138,7 +137,7 @@ export async function getUbicaciones(doctorId: string): Promise<Ubicacion[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("ubicaciones_doctor")
-    .select("id, doctor_id, nombre, direccion, telefono, maps_url")
+    .select("id, doctor_id, nombre, direccion, telefono, maps_url, es_virtual")
     .eq("doctor_id", doctorId)
     .order("created_at");
   if (error) return [];
@@ -150,7 +149,8 @@ export async function createUbicacion(
   nombre: string,
   direccion: string | null,
   telefono: string | null,
-  mapsUrl: string | null = null
+  mapsUrl: string | null = null,
+  esVirtual = false
 ): Promise<{ data?: Ubicacion; error?: string }> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -158,11 +158,12 @@ export async function createUbicacion(
     .insert({
       doctor_id: doctorId,
       nombre: nombre.trim(),
-      direccion: direccion?.trim() || null,
+      direccion: esVirtual ? null : (direccion?.trim() || null),
       telefono: telefono?.trim() || null,
-      maps_url: mapsUrl?.trim() || null,
+      maps_url: esVirtual ? null : (mapsUrl?.trim() || null),
+      es_virtual: esVirtual,
     })
-    .select("id, doctor_id, nombre, direccion, telefono, maps_url")
+    .select("id, doctor_id, nombre, direccion, telefono, maps_url, es_virtual")
     .single();
 
   if (error) return { error: error.message };

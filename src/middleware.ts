@@ -16,10 +16,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    if (pathname === "/login") {
-      return NextResponse.redirect(new URL("/inicio", request.url));
-    }
-
     if (isPublic || pathname.startsWith("/api/")) {
       return supabaseResponse;
     }
@@ -60,7 +56,12 @@ export async function middleware(request: NextRequest) {
     }
 
     if (pathname.startsWith("/suspendido")) {
-      return NextResponse.redirect(new URL("/inicio", request.url));
+      return NextResponse.redirect(new URL(isDoctor ? "/doctor" : "/inicio", request.url));
+    }
+
+    // Redirigir desde /login al panel correspondiente
+    if (pathname === "/login") {
+      return NextResponse.redirect(new URL(isDoctor ? "/doctor" : "/inicio", request.url));
     }
 
     const isDoctorRoute = pathname === "/doctor" || pathname.startsWith("/doctor/");

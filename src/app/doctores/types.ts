@@ -16,6 +16,7 @@ export type Ubicacion = {
   direccion: string | null;
   telefono: string | null;
   maps_url: string | null;
+  es_virtual: boolean;
 };
 
 export type Horario = {
@@ -26,7 +27,6 @@ export type Horario = {
   hora_fin: string;
   almuerzo_inicio: string | null;
   almuerzo_fin: string | null;
-  ubicacion_id: string | null;
 };
 
 export type HorarioDia = {
@@ -35,7 +35,6 @@ export type HorarioDia = {
   hora_fin: string;
   almuerzo_inicio: string; // "HH:MM" or ""
   almuerzo_fin: string;
-  ubicacion_id: string | null;
 };
 
 export const DIAS_SEMANA = [
@@ -54,5 +53,4 @@ export const DEFAULT_HORARIO_DIA: HorarioDia = {
   hora_fin: "17:00",
   almuerzo_inicio: "",
   almuerzo_fin: "",
-  ubicacion_id: null,
 };

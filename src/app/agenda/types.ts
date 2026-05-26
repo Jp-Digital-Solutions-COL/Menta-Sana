@@ -11,6 +11,7 @@ export type Cita = {
   consultorio_id: string;
   doctor_id: string;
   paciente_id: string;
+  ubicacion_id: string | null;
   inicio: string;    // timestamptz — ISO 8601 con offset
   fin: string;       // timestamptz — ISO 8601 con offset
   estado: EstadoCita;

@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { MapPin, MonitorSmartphone, Plus, Trash2 } from "lucide-react";
 
 interface Props {
   doctor: Doctor | null;
@@ -27,6 +29,7 @@ export default function SedesSheet({ doctor, onClose }: Props) {
   const [newDireccion, setNewDireccion] = useState("");
   const [newTelefono, setNewTelefono] = useState("");
   const [newMapsUrl, setNewMapsUrl] = useState("");
+  const [newEsVirtual, setNewEsVirtual] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,7 +48,7 @@ export default function SedesSheet({ doctor, onClose }: Props) {
     if (!doctor || !newNombre.trim()) return;
     setSaving(true);
     setError("");
-    const result = await createUbicacion(doctor.id, newNombre, newDireccion || null, newTelefono || null, newMapsUrl || null);
+    const result = await createUbicacion(doctor.id, newNombre, newDireccion || null, newTelefono || null, newMapsUrl || null, newEsVirtual);
     setSaving(false);
     if (result.error) {
       setError(result.error);
@@ -55,6 +58,7 @@ export default function SedesSheet({ doctor, onClose }: Props) {
       setNewDireccion("");
       setNewTelefono("");
       setNewMapsUrl("");
+      setNewEsVirtual(false);
       setShowAdd(false);
     }
   }
@@ -88,10 +92,15 @@ export default function SedesSheet({ doctor, onClose }: Props) {
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          {u.es_virtual
+                            ? <MonitorSmartphone className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+                            : <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                           <p className="text-sm font-medium">{u.nombre}</p>
+                          {u.es_virtual && (
+                            <span className="text-[10px] font-medium bg-teal-50 text-teal-700 border border-teal-200 px-1.5 py-0.5 rounded-full">Virtual</span>
+                          )}
                         </div>
-                        {u.direccion && (
+                        {!u.es_virtual && u.direccion && (
                           <p className="text-xs text-muted-foreground mt-0.5 ml-5">{u.direccion}</p>
                         )}
                         {u.telefono && (
@@ -129,24 +138,35 @@ export default function SedesSheet({ doctor, onClose }: Props) {
                     className="h-8 text-sm"
                     autoFocus
                   />
-                  <Input
-                    value={newDireccion}
-                    onChange={(e) => setNewDireccion(e.target.value)}
-                    placeholder="Dirección (opcional)"
-                    className="h-8 text-sm"
-                  />
+                  <div className="flex items-center justify-between rounded-md border px-3 py-2 bg-background">
+                    <div className="flex items-center gap-2">
+                      <MonitorSmartphone className="h-3.5 w-3.5 text-teal-600" />
+                      <Label className="text-sm cursor-pointer">Consultorio virtual</Label>
+                    </div>
+                    <Switch checked={newEsVirtual} onCheckedChange={setNewEsVirtual} />
+                  </div>
+                  {!newEsVirtual && (
+                    <>
+                      <Input
+                        value={newDireccion}
+                        onChange={(e) => setNewDireccion(e.target.value)}
+                        placeholder="Dirección (opcional)"
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        value={newMapsUrl}
+                        onChange={(e) => setNewMapsUrl(e.target.value)}
+                        placeholder="Link Google Maps (opcional)"
+                        type="url"
+                        className="h-8 text-sm"
+                      />
+                    </>
+                  )}
                   <Input
                     value={newTelefono}
                     onChange={(e) => setNewTelefono(e.target.value)}
                     placeholder="Teléfono (opcional)"
                     type="tel"
-                    className="h-8 text-sm"
-                  />
-                  <Input
-                    value={newMapsUrl}
-                    onChange={(e) => setNewMapsUrl(e.target.value)}
-                    placeholder="Link Google Maps (opcional)"
-                    type="url"
                     className="h-8 text-sm"
                   />
                   {error && <p className="text-xs text-destructive">{error}</p>}

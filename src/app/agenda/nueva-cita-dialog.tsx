@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createCita, createPaciente, getHorasDisponibles } from "./actions";
+import { createCita, createPaciente, getHorasDisponibles, getUbicacionesParaCita } from "./actions";
 import type { DoctorBasic, PacienteBasic } from "./types";
 import { TIPOS_DOCUMENTO } from "./types";
 import { toDateStr } from "./utils";
@@ -23,17 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { X, Search, Stethoscope, User, Plus, ArrowLeft, MapPin, AlertTriangle } from "lucide-react";
+import { X, Search, Stethoscope, User, Plus, ArrowLeft, MapPin, MonitorSmartphone } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -47,7 +37,7 @@ interface Props {
 }
 
 type SlotInfo = { hora: string; ocupado: boolean };
-type UbicacionInfo = { nombre: string; direccion: string | null; telefono: string | null } | null;
+type UbicacionBasic = { id: string; nombre: string; direccion: string | null; telefono: string | null; maps_url: string | null; es_virtual: boolean };
 
 export default function NuevaCitaDialog({
   open,
@@ -65,7 +55,8 @@ export default function NuevaCitaDialog({
   const [slots, setSlots] = useState<SlotInfo[]>([]);
   const [duracion, setDuracion] = useState(30);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [ubicacionDelDia, setUbicacionDelDia] = useState<UbicacionInfo>(null);
+  const [ubicaciones, setUbicaciones] = useState<UbicacionBasic[]>([]);
+  const [ubicacionId, setUbicacionId] = useState("");
 
   // Patient search
   const [pacienteSearch, setPacienteSearch] = useState("");
@@ -85,22 +76,25 @@ export default function NuevaCitaDialog({
   const [motivo, setMotivo] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [showConflictAlert, setShowConflictAlert] = useState(false);
+
+  // Fetch ubicaciones when doctor changes
+  useEffect(() => {
+    if (!doctorId) { setUbicaciones([]); setUbicacionId(""); return; }
+    getUbicacionesParaCita(doctorId).then((ubs) => {
+      setUbicaciones(ubs);
+      setUbicacionId("");
+    });
+  }, [doctorId]);
 
   // Fetch slots when doctor or date changes
   useEffect(() => {
-    if (!doctorId || !fecha) {
-      setSlots([]);
-      setUbicacionDelDia(null);
-      return;
-    }
+    if (!doctorId || !fecha) { setSlots([]); return; }
     setLoadingSlots(true);
     const [y, mo, d] = fecha.split("-").map(Number);
     const dayStartISO = new Date(y, mo - 1, d).toISOString();
-    getHorasDisponibles(doctorId, fecha, dayStartISO).then(({ slots: s, duracionCita, ubicacion }) => {
+    getHorasDisponibles(doctorId, fecha, dayStartISO).then(({ slots: s, duracionCita }) => {
       setSlots(s);
       if (duracionCita) setDuracion(duracionCita);
-      setUbicacionDelDia(ubicacion);
       setLoadingSlots(false);
       setHora((prev) => (s.some((sl) => sl.hora === prev) ? prev : ""));
     });
@@ -132,8 +126,10 @@ export default function NuevaCitaDialog({
       .slice(0, 8);
   }, [pacientes, pacienteSearch]);
 
-  async function doCreate() {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     if (!doctorId || !selectedPaciente || !fecha || !hora) return;
+    if (slotOcupado) return;
     setSaving(true);
     setError("");
     const [fy, fm, fd] = fecha.split("-").map(Number);
@@ -145,6 +141,7 @@ export default function NuevaCitaDialog({
       inicioISO: inicioDate.toISOString(),
       finISO: new Date(inicioDate.getTime() + duracion * 60000).toISOString(),
       motivo,
+      ubicacionId: ubicacionId || null,
     });
     if (result.error) {
       setError(result.error);
@@ -153,16 +150,6 @@ export default function NuevaCitaDialog({
       await onCreated();
       onClose();
     }
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!doctorId || !selectedPaciente || !fecha || !hora) return;
-    if (slotOcupado) {
-      setShowConflictAlert(true);
-      return;
-    }
-    await doCreate();
   }
 
   async function handleCreatePaciente() {
@@ -192,7 +179,7 @@ export default function NuevaCitaDialog({
     }
   }
 
-  const canSubmit = !!doctorId && !!selectedPaciente && !!fecha && !!hora && !saving;
+  const canSubmit = !!doctorId && !!selectedPaciente && !!fecha && !!hora && !saving && !slotOcupado;
 
   return (
     <>
@@ -258,30 +245,9 @@ export default function NuevaCitaDialog({
 
                 {/* Slots de hora */}
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Label className="text-sm">
-                      Hora <span className="text-destructive">*</span>
-                    </Label>
-                    {/* Sede badge */}
-                    {!loadingSlots && slots.length > 0 && (
-                      ubicacionDelDia ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          {ubicacionDelDia.nombre}
-                          {ubicacionDelDia.direccion && (
-                            <span className="text-teal-600/70 hidden sm:inline">
-                              · {ubicacionDelDia.direccion}
-                            </span>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          Consultorio principal
-                        </span>
-                      )
-                    )}
-                  </div>
+                  <Label className="text-sm">
+                    Hora <span className="text-destructive">*</span>
+                  </Label>
 
                   {!doctorId || !fecha ? (
                     <p className="text-xs text-muted-foreground py-1">
@@ -334,9 +300,8 @@ export default function NuevaCitaDialog({
                         </div>
                       )}
                       {slotOcupado && (
-                        <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2">
-                          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                          Esta hora ya tiene una cita agendada. Se le pedirá confirmación al guardar.
+                        <div className="flex items-center gap-1.5 text-xs text-destructive bg-destructive/5 border border-destructive/20 rounded-md px-2.5 py-2">
+                          Esta hora ya tiene una cita agendada. Selecciona otra hora disponible.
                         </div>
                       )}
                     </div>
@@ -347,7 +312,7 @@ export default function NuevaCitaDialog({
                 <div className="space-y-2">
                   <Label className="text-sm">Duración</Label>
                   <div className="flex flex-wrap gap-1.5">
-                    {[15, 20, 30, 45, 60, 90, 120].map((min) => (
+                    {[30, 45, 60, 90, 120].map((min) => (
                       <button
                         key={min}
                         type="button"
@@ -363,6 +328,43 @@ export default function NuevaCitaDialog({
                     ))}
                   </div>
                 </div>
+
+                {/* Consultorio */}
+                {ubicaciones.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Consultorio</Label>
+                    <Select value={ubicacionId} onValueChange={setUbicacionId}>
+                      <SelectTrigger>
+                        <span data-slot="select-value" className="flex flex-1 text-left truncate text-sm">
+                          {ubicacionId
+                            ? (() => {
+                                const u = ubicaciones.find((x) => x.id === ubicacionId);
+                                return u ? u.nombre : "Seleccionar...";
+                              })()
+                            : <span className="text-muted-foreground">Seleccionar consultorio...</span>}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ubicaciones.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            <span className="flex items-center gap-1.5">
+                              {u.es_virtual
+                                ? <MonitorSmartphone className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+                                : <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                              {u.nombre}
+                              {!u.es_virtual && u.direccion && (
+                                <span className="text-muted-foreground text-xs">· {u.direccion}</span>
+                              )}
+                              {u.es_virtual && (
+                                <span className="text-teal-600 text-xs">· Virtual</span>
+                              )}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               <div className="border-t" />
@@ -615,31 +617,6 @@ export default function NuevaCitaDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Confirmación de cita extra (cruce de horario) */}
-      <AlertDialog open={showConflictAlert} onOpenChange={setShowConflictAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Cruce de horario
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              La cita se cruza con otra ya agendada para este doctor.
-              ¿Está de acuerdo en agendarla de todas formas?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={doCreate}
-              disabled={saving}
-              className="bg-amber-500 hover:bg-amber-600 text-white"
-            >
-              {saving ? "Guardando..." : "Sí, agendar de todas formas"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
