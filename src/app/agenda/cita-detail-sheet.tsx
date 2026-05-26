@@ -27,8 +27,10 @@ import {
   Stethoscope,
   Mail,
   MapPin,
+  Video,
   Trash2,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -60,9 +62,12 @@ function urlRecordatorio(
   let msg =
     `Hola ${paciente}, le recordamos que tiene una cita con ${prefijo} ${doctor} ` +
     `el ${fecha} a las ${hora}. ¿Puede confirmarnos su asistencia? Gracias.`;
-  if (lugar?.nombre) msg += `\n\nLugar: ${lugar.nombre}`;
-  if (lugar?.direccion) msg += `\nDirección: ${lugar.direccion}`;
-  if (meetLink) msg += `\n\nVideollamada: ${meetLink}`;
+  if (meetLink) {
+    msg += `\n\nCita virtual\nLink de la videollamada: ${meetLink}`;
+  } else {
+    if (lugar?.nombre) msg += `\n\nLugar: ${lugar.nombre}`;
+    if (lugar?.direccion) msg += `\nDirección: ${lugar.direccion}`;
+  }
   return `https://wa.me/${normalizarTelefono(tel)}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -249,7 +254,23 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
                 <span className="text-muted-foreground ml-1.5">({dur} min)</span>
               </span>
             </div>
-            {ubicacionWA && (ubicacionWA.nombre || ubicacionWA.direccion) && (
+            {cita.meet_link ? (
+              <div className="flex items-start gap-3 text-sm">
+                <Video className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                <div className="min-w-0 space-y-1.5">
+                  <span className="font-medium text-blue-700">Cita virtual</span>
+                  <a
+                    href={cita.meet_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 w-full px-3 py-2 rounded-md bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                    Unirse a la videollamada
+                  </a>
+                </div>
+              </div>
+            ) : ubicacionWA && (ubicacionWA.nombre || ubicacionWA.direccion) ? (
               <div className="flex items-start gap-3 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div className="min-w-0">
@@ -269,7 +290,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
                   )}
                 </div>
               </div>
-            )}
+            ) : null}
             {cita.motivo && (
               <p className="text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
                 {cita.motivo}
