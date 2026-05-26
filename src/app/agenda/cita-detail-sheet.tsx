@@ -26,6 +26,7 @@ import {
   Clock,
   Stethoscope,
   Mail,
+  MapPin,
   Trash2,
   ChevronDown,
 } from "lucide-react";
@@ -45,13 +46,23 @@ function normalizarTelefono(tel: string): string {
   return digits.startsWith("57") ? digits : "57" + digits;
 }
 
-function urlRecordatorio(tel: string, paciente: string, doctor: string, fecha: string, hora: string, lugar?: { nombre: string | null; direccion: string | null } | null, meetLink?: string | null) {
+function urlRecordatorio(
+  tel: string,
+  paciente: string,
+  titulo: string | null,
+  doctor: string,
+  fecha: string,
+  hora: string,
+  lugar?: { nombre: string | null; direccion: string | null } | null,
+  meetLink?: string | null,
+) {
+  const prefijo = titulo ?? "Dr.";
   let msg =
-    `Hola ${paciente}, le recordamos que tiene una cita con el Dr. ${doctor} ` +
+    `Hola ${paciente}, le recordamos que tiene una cita con ${prefijo} ${doctor} ` +
     `el ${fecha} a las ${hora}. ¿Puede confirmarnos su asistencia? Gracias.`;
-  if (lugar?.nombre) msg += `\n\n-> ${lugar.nombre}`;
-  if (lugar?.direccion) msg += `\n${lugar.direccion}`;
-  if (meetLink) msg += `\n\n🔗 Link de tu videollamada: ${meetLink}`;
+  if (lugar?.nombre) msg += `\n\nLugar: ${lugar.nombre}`;
+  if (lugar?.direccion) msg += `\nDirección: ${lugar.direccion}`;
+  if (meetLink) msg += `\n\nVideollamada: ${meetLink}`;
   return `https://wa.me/${normalizarTelefono(tel)}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -238,6 +249,27 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
                 <span className="text-muted-foreground ml-1.5">({dur} min)</span>
               </span>
             </div>
+            {ubicacionWA && (ubicacionWA.nombre || ubicacionWA.direccion) && (
+              <div className="flex items-start gap-3 text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  {ubicacionWA.nombre && <span className="font-medium">{ubicacionWA.nombre}</span>}
+                  {ubicacionWA.direccion && (
+                    <p className="text-muted-foreground text-xs mt-0.5">{ubicacionWA.direccion}</p>
+                  )}
+                  {ubicacionWA.mapsUrl && (
+                    <a
+                      href={ubicacionWA.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline mt-0.5 inline-block"
+                    >
+                      Ver en mapa
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
             {cita.motivo && (
               <p className="text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
                 {cita.motivo}
@@ -253,7 +285,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
                   {tel && (
                     <div className="flex gap-2">
                       <a
-                        href={urlRecordatorio(tel, cita.pacientes!.nombre, cita.doctores.nombre, dateLabel, formatTime(dt), ubicacionWA, cita.meet_link ?? null)}
+                        href={urlRecordatorio(tel, cita.pacientes!.nombre, cita.doctores.titulo, cita.doctores.nombre, dateLabel, formatTime(dt), ubicacionWA, cita.meet_link ?? null)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={buttonVariants({ variant: "outline", size: "sm" }) +

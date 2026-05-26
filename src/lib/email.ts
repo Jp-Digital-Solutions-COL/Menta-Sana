@@ -14,6 +14,7 @@ export async function sendConfirmacionCita(params: {
   to: string;
   paciente: string;
   doctor: string;
+  doctorTitulo?: string | null;
   especialidad: string | null;
   fotoUrl: string | null;
   fecha: string;
@@ -31,6 +32,7 @@ export async function sendConfirmacionCita(params: {
   meetLink?: string | null;
 }): Promise<{ error?: string }> {
   const { to, paciente, doctor, especialidad, fotoUrl, fecha, hora, motivo, secretariaWA, secretariaEmail } = params;
+  const doctorTitulo = params.doctorTitulo ?? "Dr.";
   const titulo = params.titulo ?? "Recordatorio de cita";
   const intro = params.intro ?? "le recordamos los detalles de su próxima cita";
   const { tokenConfirmacion, consultorioNombre, consultorioDireccion, consultorioTelefono, consultorioMapsUrl, meetLink } = params;
@@ -68,7 +70,7 @@ export async function sendConfirmacionCita(params: {
               <img src="${fotoSrc}" alt="${doctor}" width="100" height="100"
                 style="width:100px;height:100px;border-radius:50%;object-fit:${isLogoFallback ? "contain" : "cover"};border:3px solid #e5e7eb;background:#f8fafc;display:inline-block;" />
               <p style="margin:16px 0 4px;font-size:17px;font-weight:700;color:#111827;">
-                Dr. ${doctor}
+                ${doctorTitulo} ${doctor}
               </p>
               ${especialidad
                 ? `<p style="margin:0;font-size:13px;color:#6b7280;">${especialidad}</p>`
@@ -207,7 +209,7 @@ export async function sendConfirmacionCita(params: {
   const { error } = await resend.emails.send({
     from: FROM,
     to,
-    subject: `${titulo} – Dr. ${doctor} – ${fecha} ${hora}`,
+    subject: `${titulo} – ${doctorTitulo} ${doctor} – ${fecha} ${hora}`,
     html,
   });
 

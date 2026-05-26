@@ -61,7 +61,7 @@ export async function getCitas(
   const supabase = await createClient();
   let q = supabase
     .from("citas")
-    .select("*, doctores(id, nombre), pacientes(id, nombre, telefono, cedula, email, tipo_documento)")
+    .select("*, doctores(id, nombre, titulo), pacientes(id, nombre, telefono, cedula, email, tipo_documento)")
     .gte("inicio", start)
     .lte("inicio", end)
     .order("inicio");
@@ -286,7 +286,7 @@ export async function createCita(input: {
   try {
     const [pacienteResult, doctorResult, perfilResult, consultorioResult, ubicacionResult] = await Promise.all([
       supabase.from("pacientes").select("nombre, email").eq("id", input.pacienteId).single(),
-      supabase.from("doctores").select("nombre, foto_url, especialidad").eq("id", input.doctorId).single(),
+      supabase.from("doctores").select("nombre, titulo, foto_url, especialidad").eq("id", input.doctorId).single(),
       supabase.from("profiles").select("telefono").eq("id", user.id).single(),
       supabase.from("consultorios").select("nombre, direccion, telefono_contacto, maps_url").eq("id", profile.consultorio_id).single(),
       input.ubicacionId
@@ -316,6 +316,7 @@ export async function createCita(input: {
         to: pacienteEmail,
         paciente: pacienteResult.data?.nombre ?? "",
         doctor: doctorResult.data?.nombre ?? "",
+        doctorTitulo: (doctorResult.data as { titulo?: string | null } | null)?.titulo ?? null,
         especialidad: doctorResult.data?.especialidad ?? null,
         fotoUrl: doctorResult.data?.foto_url ?? null,
         fecha: fechaLabel,
@@ -496,7 +497,7 @@ export async function sendConfirmacionEmail(params: {
   }
 
   const [doctorResult, profileResult, citaResult] = await Promise.all([
-    supabase.from("doctores").select("foto_url, especialidad").eq("id", params.doctorId).single(),
+    supabase.from("doctores").select("titulo, foto_url, especialidad").eq("id", params.doctorId).single(),
     user
       ? supabase.from("profiles").select("telefono, consultorio_id").eq("id", user.id).single()
       : Promise.resolve({ data: null }),
@@ -527,6 +528,7 @@ export async function sendConfirmacionEmail(params: {
     to: params.to,
     paciente: params.paciente,
     doctor: params.doctor,
+    doctorTitulo: (doctorResult.data as { titulo?: string | null } | null)?.titulo ?? null,
     especialidad: doctorResult.data?.especialidad ?? null,
     fotoUrl: doctorResult.data?.foto_url ?? null,
     fecha: params.fecha,

@@ -23,7 +23,7 @@ export type Cita = {
 };
 
 export type CitaConRel = Cita & {
-  doctores: { id: string; nombre: string };
+  doctores: { id: string; nombre: string; titulo: string | null };
   pacientes: {
     id: string;
     nombre: string;

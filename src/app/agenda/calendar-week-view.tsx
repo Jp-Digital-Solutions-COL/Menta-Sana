@@ -36,8 +36,11 @@ function timeTopPx(t: string): number {
 function heightPx(dur: number): number {
   return Math.max(dur * (HOUR_HEIGHT / 60), 24);
 }
-function doctorColor(index: number): string {
-  return `hsl(${(index * 67) % 360} 65% 48%)`;
+const UBICACION_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EF4444", "#EC4899", "#10B981"];
+
+function ubicacionColor(ubicacionId: string | null, sortedIds: (string | null)[]): string {
+  const idx = sortedIds.indexOf(ubicacionId ?? null);
+  return UBICACION_COLORS[idx >= 0 ? idx % UBICACION_COLORS.length : 0];
 }
 function timeFromClickY(clientY: number, rect: DOMRect): string {
   const y = clientY - rect.top;
@@ -166,6 +169,13 @@ export default function CalendarWeekView({
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
   const doctorIds = new Set(doctors.map((d) => d.id));
+
+  // Unique ubicacion_ids for color mapping: null (main consultorio) always first
+  const allUbicacionIds: (string | null)[] = (() => {
+    const seen = new Set<string | null>([null]);
+    for (const c of citas) seen.add(c.ubicacion_id ?? null);
+    return [...seen];
+  })();
 
   const now = new Date();
   const nowBog = getBogotaHM(now);
@@ -390,7 +400,7 @@ export default function CalendarWeekView({
                   ))}
 
                   {colGhost && (
-                    <WeekGhost ghost={colGhost} citas={citas} allDoctors={allDoctors} />
+                    <WeekGhost ghost={colGhost} citas={citas} allUbicacionIds={allUbicacionIds} />
                   )}
 
                   {dayCitas.map((cita) => {
@@ -400,8 +410,7 @@ export default function CalendarWeekView({
                     const h = heightPx(dur);
                     if (top < -h || top > TOTAL_H) return null;
 
-                    const doctorIdx = allDoctors.findIndex((d) => d.id === cita.doctor_id);
-                    const color = doctorColor(doctorIdx >= 0 ? doctorIdx : 0);
+                    const color = ubicacionColor(cita.ubicacion_id, allUbicacionIds);
                     const { leftPct, widthPct } = layout.get(cita.id) ?? { leftPct: 0, widthPct: 100 };
 
                     return (
@@ -571,13 +580,12 @@ function WeekAlmuerzoBlock({
   );
 }
 
-function WeekGhost({ ghost, citas, allDoctors }: { ghost: GhostState; citas: CitaConRel[]; allDoctors: DoctorBasic[] }) {
+function WeekGhost({ ghost, citas, allUbicacionIds }: { ghost: GhostState; citas: CitaConRel[]; allUbicacionIds: (string | null)[] }) {
   const cita = citas.find((c) => c.id === ghost.citaId);
   if (!cita) return null;
   const isBloqueada = cita.estado === "bloqueada";
   const ec = ESTADO_CONFIG[cita.estado];
-  const doctorIdx = allDoctors.findIndex((d) => d.id === cita.doctor_id);
-  const color = doctorColor(doctorIdx >= 0 ? doctorIdx : 0);
+  const color = isBloqueada ? "#9ca3af" : ubicacionColor(cita.ubicacion_id, allUbicacionIds);
   const { h: th, m: tm } = topToTime(ghost.top);
   const timeLabel = `${String(th).padStart(2, "0")}:${String(tm).padStart(2, "0")}`;
 

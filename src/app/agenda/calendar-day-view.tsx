@@ -37,8 +37,11 @@ function timeTopPx(t: string): number {
 function heightPx(dur: number) {
   return Math.max(dur * (HOUR_HEIGHT / 60), 28);
 }
-function doctorColor(index: number): string {
-  return `hsl(${(index * 67) % 360} 65% 48%)`;
+const UBICACION_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EF4444", "#EC4899", "#10B981"];
+
+function ubicacionColor(ubicacionId: string | null, sortedIds: (string | null)[]): string {
+  const idx = sortedIds.indexOf(ubicacionId ?? null);
+  return UBICACION_COLORS[idx >= 0 ? idx % UBICACION_COLORS.length : 0];
 }
 function timeFromClickY(clientY: number, rect: DOMRect): string {
   const y = clientY - rect.top;
@@ -140,7 +143,7 @@ export default function CalendarDayView({
   date,
   today,
   doctors,
-  allDoctors,
+  allDoctors: _allDoctors,
   citas,
   horarios = [],
   onCitaClick,
@@ -163,6 +166,13 @@ export default function CalendarDayView({
   }, []);
 
   const dayCitas = citas.filter((c) => isSameDay(parseTS(c.inicio), date));
+
+  // Unique ubicacion_ids for color mapping: null (main consultorio) always first
+  const allUbicacionIds: (string | null)[] = (() => {
+    const seen = new Set<string | null>([null]);
+    for (const c of citas) seen.add(c.ubicacion_id ?? null);
+    return [...seen];
+  })();
   const isToday = isSameDay(date, today);
   const now = new Date();
   const nowBog = getBogotaHM(now);
@@ -254,19 +264,15 @@ export default function CalendarDayView({
         {showHeaders && (
           <div className="flex border-b shrink-0 bg-background">
             <div className="w-14 shrink-0 border-r" />
-            {doctors.map((doc, i) => {
-              const doctorIdx = allDoctors.findIndex((d) => d.id === doc.id);
-              const color = doctorColor(doctorIdx >= 0 ? doctorIdx : i);
-              return (
-                <div
-                  key={doc.id}
-                  className={`flex-1 px-3 py-2 text-xs font-semibold truncate min-w-[90px] flex items-center gap-1.5 ${i > 0 ? "border-l" : ""}`}
-                >
-                  <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-                  {doc.nombre}
-                </div>
-              );
-            })}
+            {doctors.map((doc, i) => (
+              <div
+                key={doc.id}
+                className={`flex-1 px-3 py-2 text-xs font-semibold truncate min-w-[90px] flex items-center gap-1.5 ${i > 0 ? "border-l" : ""}`}
+              >
+                <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0 bg-muted-foreground/30" />
+                {doc.nombre}
+              </div>
+            ))}
           </div>
         )}
 
@@ -307,8 +313,6 @@ export default function CalendarDayView({
 
             {doctors.map((doc, idx) => {
               const docCitas = dayCitas.filter((c) => c.doctor_id === doc.id);
-              const doctorIdx = allDoctors.findIndex((d) => d.id === doc.id);
-              const color = doctorColor(doctorIdx >= 0 ? doctorIdx : idx);
               const colGhost = ghost?.colIdx === idx ? ghost : null;
               const layout = computeOverlapLayout(docCitas);
               const doctorHasSchedules = horarios.some((h) => h.doctor_id === doc.id);
@@ -364,7 +368,7 @@ export default function CalendarDayView({
                   )}
 
                   {colGhost && (
-                    <DragGhostDay ghost={colGhost} citas={citas} color={color} />
+                    <DragGhostDay ghost={colGhost} citas={citas} allUbicacionIds={allUbicacionIds} />
                   )}
 
                   {docCitas.map((cita) => {
@@ -374,6 +378,7 @@ export default function CalendarDayView({
                     const h = heightPx(dur);
                     if (top < -h || top > TOTAL_H) return null;
                     const { leftPct, widthPct } = layout.get(cita.id) ?? { leftPct: 0, widthPct: 100 };
+                    const citaColor = ubicacionColor(cita.ubicacion_id, allUbicacionIds);
 
                     return (
                       <CitaBlock
@@ -382,7 +387,7 @@ export default function CalendarDayView({
                         top={top}
                         h={h}
                         dur={dur}
-                        color={color}
+                        color={citaColor}
                         colIdx={idx}
                         isDraggingThis={ghost?.citaId === cita.id}
                         leftPct={leftPct}
@@ -530,11 +535,12 @@ function AlmuerzoBlock({ inicio, fin }: { inicio: string; fin: string }) {
   );
 }
 
-function DragGhostDay({ ghost, citas, color }: { ghost: GhostState; citas: CitaConRel[]; color: string }) {
+function DragGhostDay({ ghost, citas, allUbicacionIds }: { ghost: GhostState; citas: CitaConRel[]; allUbicacionIds: (string | null)[] }) {
   const cita = citas.find((c) => c.id === ghost.citaId);
   if (!cita) return null;
   const isBloqueada = cita.estado === "bloqueada";
   const ec = ESTADO_CONFIG[cita.estado];
+  const color = isBloqueada ? "#9ca3af" : ubicacionColor(cita.ubicacion_id, allUbicacionIds);
   const { h: th, m: tm } = topToTime(ghost.top);
   const timeLabel = `${String(th).padStart(2, "0")}:${String(tm).padStart(2, "0")}`;
 
