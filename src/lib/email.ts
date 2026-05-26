@@ -35,6 +35,9 @@ export async function sendConfirmacionCita(params: {
   const intro = params.intro ?? "le recordamos los detalles de su próxima cita";
   const { tokenConfirmacion, consultorioNombre, consultorioDireccion, consultorioTelefono, consultorioMapsUrl, meetLink } = params;
 
+  // Para el botón de WhatsApp se prefiere el teléfono del consultorio; si no hay, se usa el de la secretaria/doctor.
+  const waNumero = consultorioTelefono ?? secretariaWA;
+
   const fotoSrc = fotoUrl ?? `${APP_URL}/Menta-Sana_solo_logo.png`;
   const isLogoFallback = !fotoUrl;
 
@@ -160,8 +163,8 @@ export async function sendConfirmacionCita(params: {
               </p>
               <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
                 <tr>
-                  ${secretariaWA ? `<td style="padding-right:8px;">
-                    <a href="https://wa.me/${secretariaWA.replace(/\D/g, '')}"
+                  ${waNumero ? `<td style="padding-right:8px;">
+                    <a href="https://wa.me/${waNumero.replace(/\D/g, '')}"
                       target="_blank"
                       style="display:inline-block;padding:10px 18px;background:#25D366;color:#ffffff;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">
                       <img src="${APP_URL}/icon-whatsapp.svg" width="15" height="15" alt="" style="display:inline-block;vertical-align:middle;margin-right:6px;margin-top:-1px;" />
