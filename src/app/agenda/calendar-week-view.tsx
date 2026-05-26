@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import type { CitaConRel, DoctorBasic, HorarioCalendario } from "./types";
 import { ESTADO_CONFIG } from "./types";
-import { durationMinutes, formatTime, isSameDay, toDateStr, addDays, getBogotaHM, bogotaToISO } from "./utils";
+import { durationMinutes, formatTime, isSameDay, toDateStr, addDays, getBogotaHM, bogotaToISO, parseTS } from "./utils";
 
 const HOUR_HEIGHT = 64;
 const GRID_START = 7;
@@ -253,7 +253,7 @@ export default function CalendarWeekView({
     const [y, mo, d] = toDateStr(targetDay).split("-").map(Number);
     const newISOStart = bogotaToISO(y, mo, d, h, m);
     const newStart = new Date(newISOStart);
-    const origDate = new Date(cita.inicio);
+    const origDate = parseTS(cita.inicio);
     if (newStart.getTime() === origDate.getTime()) return;
 
     await onReschedule(cita.id, newISOStart, new Date(newStart.getTime() + dur * 60000).toISOString());
@@ -327,7 +327,7 @@ export default function CalendarWeekView({
             {weekDays.map((day, dayIdx) => {
               const isToday = isSameDay(day, today);
               const dayCitas = citas
-                .filter((c) => isSameDay(new Date(c.inicio), day) && doctorIds.has(c.doctor_id))
+                .filter((c) => isSameDay(parseTS(c.inicio), day) && doctorIds.has(c.doctor_id))
                 .sort((a, b) => a.inicio.localeCompare(b.inicio));
 
               const colGhost = ghost?.targetDayIdx === dayIdx ? ghost : null;
@@ -394,7 +394,7 @@ export default function CalendarWeekView({
                   )}
 
                   {dayCitas.map((cita) => {
-                    const dt = new Date(cita.inicio);
+                    const dt = parseTS(cita.inicio);
                     const dur = durationMinutes(cita.inicio, cita.fin);
                     const top = topPx(dt);
                     const h = heightPx(dur);
@@ -452,7 +452,7 @@ function WeekCitaBlock({
 }) {
   const isBloqueada = cita.estado === "bloqueada";
   const ec = ESTADO_CONFIG[cita.estado];
-  const dt = new Date(cita.inicio);
+  const dt = parseTS(cita.inicio);
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: cita.id,

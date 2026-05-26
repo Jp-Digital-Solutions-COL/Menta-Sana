@@ -7,7 +7,7 @@ import {
   getHorariosParaCalendario,
 } from "./actions";
 import AgendaClient from "./agenda-client";
-import { startOfWeek, endOfWeek, toDateStr, todayBogota } from "./utils";
+import { startOfWeek, endOfWeek, toDateStr, todayBogota, bogotaToISO } from "./utils";
 
 export default async function AgendaPage() {
   const supabase = await createClient();
@@ -27,10 +27,12 @@ export default async function AgendaPage() {
   const ws = startOfWeek(today);
   const we = endOfWeek(today);
 
+  const [sy, sm, sd] = toDateStr(ws).split("-").map(Number);
+  const [ey, em, ed] = toDateStr(we).split("-").map(Number);
   const [doctors, pacientes, citas] = await Promise.all([
     getDoctoresActivos(),
     getPacientesBasic(),
-    getCitas(`${toDateStr(ws)}T00:00:00`, `${toDateStr(we)}T23:59:59`),
+    getCitas(bogotaToISO(sy, sm, sd, 0, 0), bogotaToISO(ey, em, ed, 23, 59)),
   ]);
 
   const horarios = await getHorariosParaCalendario(doctors.map((d) => d.id));

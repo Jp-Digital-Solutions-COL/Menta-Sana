@@ -109,15 +109,16 @@ export function formatWeekRange(start: Date, end: Date): string {
 }
 
 /**
- * Construye ISO UTC a partir de componentes de fecha/hora locales.
- * Equivale a new Date(y, m-1, d, h, min).toISOString() pero con tipos explícitos.
+ * Parses a timestamp string from Supabase as UTC.
+ *
+ * The citas.inicio / citas.fin columns are `timestamp WITHOUT TIME ZONE`.
+ * Supabase returns them without timezone suffix (e.g. "2026-05-25T18:00:00").
+ * ECMAScript parses such strings as LOCAL time, which is wrong in non-UTC browsers.
+ * Appending "Z" forces UTC interpretation, matching the actual stored value.
  */
-export function localToISO(
-  y: number,
-  m: number,
-  d: number,
-  h: number,
-  min: number
-): string {
-  return new Date(y, m - 1, d, h, min, 0).toISOString();
+export function parseTS(s: string): Date {
+  if (s.endsWith("Z") || s.includes("+") || /[-+]\d{2}:\d{2}$/.test(s)) {
+    return new Date(s);
+  }
+  return new Date(s + "Z");
 }

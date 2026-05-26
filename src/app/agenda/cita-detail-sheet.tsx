@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { updateEstado, reagendar, deleteCita, getHorasDisponibles, sendConfirmacionEmail, getUbicacionParaCita } from "./actions";
 import type { CitaConRel, EstadoCita } from "./types";
 import { ESTADO_CONFIG } from "./types";
-import { durationMinutes, formatTime, toDateStr, bogotaToISO } from "./utils";
+import { durationMinutes, formatTime, toDateStr, bogotaToISO, parseTS } from "./utils";
 import {
   Sheet,
   SheetContent,
@@ -101,7 +101,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
     setConfirmDelete(false);
     setEmailSent(false);
     setEmailError("");
-    setReschedFecha(toDateStr(new Date(cita.inicio)));
+    setReschedFecha(toDateStr(parseTS(cita.inicio)));
     setReschedHora("");
     setReschedDur(durationMinutes(cita.inicio, cita.fin));
     setReschedSlots([]);
@@ -157,8 +157,8 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
 
   if (!cita) return null;
 
-  const dt = new Date(cita.inicio);
-  const endDt = new Date(cita.fin);
+  const dt = parseTS(cita.inicio);
+  const endDt = parseTS(cita.fin);
   const dur = durationMinutes(cita.inicio, cita.fin);
   const ec = ESTADO_CONFIG[estado];
   const isBloqueada = cita.estado === "bloqueada";
@@ -166,6 +166,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
 
   const dateLabel = new Intl.DateTimeFormat("es-CO", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
+    timeZone: "America/Bogota",
   }).format(dt);
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

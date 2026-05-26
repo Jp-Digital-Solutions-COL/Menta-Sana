@@ -11,6 +11,7 @@ import {
   toDateStr,
   formatDayLabel,
   formatWeekRange,
+  bogotaToISO,
 } from "./utils";
 import CalendarDayView from "./calendar-day-view";
 import CalendarWeekView from "./calendar-week-view";
@@ -121,9 +122,11 @@ export default function AgendaClient({
     setIsPending(true);
     try {
       const we = endOfWeek(wStart);
+      const [sy, sm, sd] = toDateStr(wStart).split("-").map(Number);
+      const [ey, em, ed] = toDateStr(we).split("-").map(Number);
       const data = await getCitas(
-        new Date(wStart.getFullYear(), wStart.getMonth(), wStart.getDate()).toISOString(),
-        new Date(we.getFullYear(), we.getMonth(), we.getDate(), 23, 59, 59).toISOString(),
+        bogotaToISO(sy, sm, sd, 0, 0),
+        bogotaToISO(ey, em, ed, 23, 59),
         lockedDoctor?.id
       );
       setCitas(data);

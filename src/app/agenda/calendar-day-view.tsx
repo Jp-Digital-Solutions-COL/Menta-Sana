@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import type { CitaConRel, DoctorBasic, HorarioCalendario } from "./types";
 import { ESTADO_CONFIG } from "./types";
-import { durationMinutes, formatTime, isSameDay, getBogotaHM, bogotaToISO, toDateStr } from "./utils";
+import { durationMinutes, formatTime, isSameDay, getBogotaHM, bogotaToISO, toDateStr, parseTS } from "./utils";
 import { CalendarDays } from "lucide-react";
 
 const HOUR_HEIGHT = 64;
@@ -162,7 +162,7 @@ export default function CalendarDayView({
     }
   }, []);
 
-  const dayCitas = citas.filter((c) => isSameDay(new Date(c.inicio), date));
+  const dayCitas = citas.filter((c) => isSameDay(parseTS(c.inicio), date));
   const isToday = isSameDay(date, today);
   const now = new Date();
   const nowBog = getBogotaHM(now);
@@ -368,7 +368,7 @@ export default function CalendarDayView({
                   )}
 
                   {docCitas.map((cita) => {
-                    const dt = new Date(cita.inicio);
+                    const dt = parseTS(cita.inicio);
                     const dur = durationMinutes(cita.inicio, cita.fin);
                     const top = topPx(dt);
                     const h = heightPx(dur);
@@ -423,7 +423,7 @@ function CitaBlock({
 }) {
   const isBloqueada = cita.estado === "bloqueada";
   const ec = ESTADO_CONFIG[cita.estado];
-  const dt = new Date(cita.inicio);
+  const dt = parseTS(cita.inicio);
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: cita.id,
