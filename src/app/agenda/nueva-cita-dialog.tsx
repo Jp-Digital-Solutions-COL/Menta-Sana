@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { X, Search, Stethoscope, User, Plus, ArrowLeft, MapPin, MonitorSmartphone } from "lucide-react";
+import { X, Search, Stethoscope, User, Plus, ArrowLeft, MapPin, MonitorSmartphone, Video } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -73,9 +73,13 @@ export default function NuevaCitaDialog({
   const [savingNew, setSavingNew] = useState(false);
   const [newError, setNewError] = useState("");
 
+  const [meetLink, setMeetLink] = useState("");
   const [motivo, setMotivo] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const isVirtual = ubicaciones.find((u) => u.id === ubicacionId)?.es_virtual ?? false;
+  const meetLinkValido = !isVirtual || meetLink.startsWith("https://meet.google.com/");
 
   // Fetch ubicaciones when doctor changes
   useEffect(() => {
@@ -85,6 +89,11 @@ export default function NuevaCitaDialog({
       setUbicacionId("");
     });
   }, [doctorId]);
+
+  // Limpiar meet link cuando cambia a ubicación no virtual
+  useEffect(() => {
+    if (!isVirtual) setMeetLink("");
+  }, [isVirtual]);
 
   // Fetch slots when doctor or date changes
   useEffect(() => {
@@ -142,6 +151,7 @@ export default function NuevaCitaDialog({
       finISO: new Date(inicioDate.getTime() + duracion * 60000).toISOString(),
       motivo,
       ubicacionId: ubicacionId || null,
+      meetLink: isVirtual ? meetLink : null,
     });
     if (result.error) {
       setError(result.error);
@@ -179,7 +189,7 @@ export default function NuevaCitaDialog({
     }
   }
 
-  const canSubmit = !!doctorId && !!selectedPaciente && !!fecha && !!hora && !saving && !slotOcupado;
+  const canSubmit = !!doctorId && !!selectedPaciente && !!fecha && !!hora && !saving && !slotOcupado && meetLinkValido;
 
   return (
     <>
@@ -363,6 +373,33 @@ export default function NuevaCitaDialog({
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                )}
+                {/* Link de Google Meet — solo citas virtuales */}
+                {isVirtual && (
+                  <div className="space-y-1.5">
+                    <Label className="text-sm flex items-center gap-1.5">
+                      <Video className="h-3.5 w-3.5 text-blue-600" />
+                      Link de Google Meet <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      value={meetLink}
+                      onChange={(e) => setMeetLink(e.target.value.trim())}
+                      placeholder="https://meet.google.com/abc-defg-hij"
+                      className={`text-sm ${meetLink && !meetLinkValido ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    />
+                    {meetLink && !meetLinkValido && (
+                      <p className="text-xs text-destructive">El link debe empezar con https://meet.google.com/</p>
+                    )}
+                    {!meetLink && (
+                      <p className="text-xs text-muted-foreground">
+                        Crea la reunión en{" "}
+                        <a href="https://meet.google.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+                          meet.google.com
+                        </a>
+                        {" "}→ &ldquo;Crear una reunión para más tarde&rdquo;
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

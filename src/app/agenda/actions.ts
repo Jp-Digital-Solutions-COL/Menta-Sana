@@ -170,6 +170,8 @@ export async function getUbicacionesParaCita(doctorId: string): Promise<Ubicacio
   return (data ?? []) as UbicacionBasic[];
 }
 
+const MEET_PREFIX = "https://meet.google.com/";
+
 export async function createCita(input: {
   doctorId: string;
   pacienteId: string;
@@ -177,6 +179,7 @@ export async function createCita(input: {
   finISO: string;
   motivo: string;
   ubicacionId?: string | null;
+  meetLink?: string | null;
 }): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
@@ -203,6 +206,23 @@ export async function createCita(input: {
 
   if (overlap) return { error: "Ya existe una cita en ese horario para este doctor." };
 
+  // Validar meet_link si la ubicación es virtual
+  let meetLinkFinal: string | null = null;
+  if (input.ubicacionId) {
+    const { data: ub } = await supabase
+      .from("ubicaciones_doctor")
+      .select("es_virtual")
+      .eq("id", input.ubicacionId)
+      .single();
+    if (ub?.es_virtual) {
+      const ml = input.meetLink?.trim() ?? "";
+      if (!ml.startsWith(MEET_PREFIX)) {
+        return { error: "Para citas virtuales se requiere un link válido de Google Meet (https://meet.google.com/...)." };
+      }
+      meetLinkFinal = ml;
+    }
+  }
+
   const token = crypto.randomUUID();
 
   const { data: newCita, error } = await supabase
@@ -218,6 +238,7 @@ export async function createCita(input: {
       creado_por: user.id,
       token_confirmacion: token,
       ubicacion_id: input.ubicacionId ?? null,
+      meet_link: meetLinkFinal,
     })
     .select("id")
     .single();
@@ -272,6 +293,7 @@ export async function createCita(input: {
         consultorioDireccion: lugarDireccion,
         consultorioTelefono: lugarTelefono,
         consultorioMapsUrl: lugarMapsUrl,
+        meetLink: meetLinkFinal,
       });
 
       if (emailResult.error) {
@@ -442,11 +464,12 @@ export async function sendConfirmacionEmail(params: {
     user
       ? supabase.from("profiles").select("telefono, consultorio_id").eq("id", user.id).single()
       : Promise.resolve({ data: null }),
-    supabase.from("citas").select("inicio, ubicacion_id").eq("id", params.citaId).single(),
+    supabase.from("citas").select("inicio, ubicacion_id, meet_link").eq("id", params.citaId).single(),
   ]);
 
   const consultorioId = (profileResult.data as { consultorio_id?: string | null } | null)?.consultorio_id;
-  const citaUbicacionId = (citaResult.data as { ubicacion_id?: string | null } | null)?.ubicacion_id;
+  const citaUbicacionId = (citaResult.data as { ubicacion_id?: string | null; meet_link?: string | null } | null)?.ubicacion_id;
+  const citaMeetLink = (citaResult.data as { meet_link?: string | null } | null)?.meet_link ?? null;
 
   const [consultorioResult, ubicacionResult] = await Promise.all([
     consultorioId
@@ -480,6 +503,7 @@ export async function sendConfirmacionEmail(params: {
     consultorioDireccion: lugarDireccion,
     consultorioTelefono: lugarTelefono,
     consultorioMapsUrl: lugarMapsUrl,
+    meetLink: citaMeetLink,
   });
 }
 

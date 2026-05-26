@@ -24,11 +24,12 @@ export async function sendConfirmacionCita(params: {
   consultorioDireccion?: string | null;
   consultorioTelefono?: string | null;
   consultorioMapsUrl?: string | null;
+  meetLink?: string | null;
 }): Promise<{ error?: string }> {
   const { to, paciente, doctor, especialidad, fotoUrl, fecha, hora, motivo, secretariaWA, secretariaEmail } = params;
   const titulo = params.titulo ?? "Recordatorio de cita";
   const intro = params.intro ?? "le recordamos los detalles de su próxima cita";
-  const { tokenConfirmacion, consultorioNombre, consultorioDireccion, consultorioTelefono, consultorioMapsUrl } = params;
+  const { tokenConfirmacion, consultorioNombre, consultorioDireccion, consultorioTelefono, consultorioMapsUrl, meetLink } = params;
 
   const fotoSrc = fotoUrl ?? `${APP_URL}/Menta-Sana_solo_logo.png`;
   const isLogoFallback = !fotoUrl;
@@ -115,6 +116,26 @@ export async function sendConfirmacionCita(params: {
                     ${consultorioDireccion ? `<br/><span style="font-size:14px;color:#374151;">${consultorioDireccion}</span>` : ""}
                     ${consultorioTelefono ? `<br/><span style="font-size:13px;color:#6b7280;">Tel: ${consultorioTelefono}</span>` : ""}
                     ${consultorioMapsUrl ? `<br/><a href="${consultorioMapsUrl}" target="_blank" style="display:inline-block;margin-top:8px;padding:7px 16px;background:#1A73E8;color:#ffffff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:0.01em;">Cómo llegar &rsaquo;</a>` : ""}
+                  </td>
+                </tr>
+              </table>` : ""}
+
+              <!-- Videollamada Google Meet -->
+              ${meetLink ? `
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="margin-top:16px;background:#e8f0fe;border-radius:10px;border:1px solid #c5d4f8;">
+                <tr>
+                  <td style="padding:16px;">
+                    <span style="font-size:12px;color:#1a73e8;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Videollamada</span>
+                    <div style="text-align:center;margin-top:12px;">
+                      <a href="${meetLink}" target="_blank"
+                        style="display:inline-block;padding:12px 28px;background:#1a73e8;color:#ffffff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;">
+                        Unirse a la videollamada
+                      </a>
+                    </div>
+                    <p style="margin:10px 0 0;font-size:11px;color:#6b7280;text-align:center;word-break:break-all;">
+                      ${meetLink}
+                    </p>
                   </td>
                 </tr>
               </table>` : ""}

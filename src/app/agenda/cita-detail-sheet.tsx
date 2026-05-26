@@ -45,12 +45,13 @@ function normalizarTelefono(tel: string): string {
   return digits.startsWith("57") ? digits : "57" + digits;
 }
 
-function urlRecordatorio(tel: string, paciente: string, doctor: string, fecha: string, hora: string, lugar?: { nombre: string | null; direccion: string | null } | null) {
+function urlRecordatorio(tel: string, paciente: string, doctor: string, fecha: string, hora: string, lugar?: { nombre: string | null; direccion: string | null } | null, meetLink?: string | null) {
   let msg =
     `Hola ${paciente}, le recordamos que tiene una cita con el Dr. ${doctor} ` +
     `el ${fecha} a las ${hora}. ¿Puede confirmarnos su asistencia? Gracias.`;
   if (lugar?.nombre) msg += `\n\n-> ${lugar.nombre}`;
   if (lugar?.direccion) msg += `\n${lugar.direccion}`;
+  if (meetLink) msg += `\n\n🔗 Link de tu videollamada: ${meetLink}`;
   return `https://wa.me/${normalizarTelefono(tel)}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -251,7 +252,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
                   {tel && (
                     <div className="flex gap-2">
                       <a
-                        href={urlRecordatorio(tel, cita.pacientes!.nombre, cita.doctores.nombre, dateLabel, formatTime(dt), ubicacionWA)}
+                        href={urlRecordatorio(tel, cita.pacientes!.nombre, cita.doctores.nombre, dateLabel, formatTime(dt), ubicacionWA, cita.meet_link ?? null)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={buttonVariants({ variant: "outline", size: "sm" }) +

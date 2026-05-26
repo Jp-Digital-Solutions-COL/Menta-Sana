@@ -44,7 +44,7 @@ export async function GET(request: Request) {
   const { data: citas, error: citasError } = await supabase
     .from("citas")
     .select(
-      `id, inicio, motivo, token_confirmacion,
+      `id, inicio, motivo, token_confirmacion, meet_link,
        doctores  ( nombre, especialidad, foto_url ),
        pacientes ( nombre, email ),
        consultorios ( nombre, direccion, telefono_contacto )`
@@ -99,6 +99,7 @@ export async function GET(request: Request) {
       consultorioNombre: consultorio?.nombre ?? null,
       consultorioDireccion: consultorio?.direccion ?? null,
       consultorioTelefono: consultorio?.telefono_contacto ?? null,
+      meetLink: (cita.meet_link as string | null) ?? null,
     });
 
     const estadoEnvio = emailError ? "error" : "enviado";
