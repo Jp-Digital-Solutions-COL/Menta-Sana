@@ -1,21 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, MapPin, Plus, UserPlus, Zap } from "lucide-react";
+import { CalendarDays, MapPin, Plus, UserPlus, Zap, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import HorariosSheet from "@/app/doctores/horarios-sheet";
 import SedesSheet from "@/app/doctores/sedes-sheet";
+import ConsultorioSheet from "./consultorio-sheet";
 import type { Doctor } from "@/app/doctores/types";
+import type { ConsultorioConfig } from "@/app/configuracion/actions";
 
 interface Props {
   doctorId: string;
   doctorNombre: string;
+  consultorioConfig: ConsultorioConfig | null;
 }
 
-export default function DoctorConfig({ doctorId, doctorNombre }: Props) {
+export default function DoctorConfig({ doctorId, doctorNombre, consultorioConfig }: Props) {
   const [horariosOpen, setHorariosOpen] = useState(false);
   const [sedesOpen, setSedesOpen] = useState(false);
+  const [consultorioOpen, setConsultorioOpen] = useState(false);
 
   const doctor = { id: doctorId, nombre: doctorNombre } as Doctor;
 
@@ -48,6 +52,10 @@ export default function DoctorConfig({ doctorId, doctorNombre }: Props) {
           <MapPin className="h-4 w-4" />
           Consultorio extra
         </Button>
+        <Button variant="outline" className="gap-2" onClick={() => setConsultorioOpen(true)}>
+          <Building2 className="h-4 w-4" />
+          Configurar consultorio
+        </Button>
       </div>
 
       <HorariosSheet
@@ -57,6 +65,11 @@ export default function DoctorConfig({ doctorId, doctorNombre }: Props) {
       <SedesSheet
         doctor={sedesOpen ? doctor : null}
         onClose={() => setSedesOpen(false)}
+      />
+      <ConsultorioSheet
+        open={consultorioOpen}
+        onClose={() => setConsultorioOpen(false)}
+        config={consultorioConfig}
       />
     </>
   );

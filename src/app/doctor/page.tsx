@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import DoctorConfig from "./doctor-config";
+import { getConsultorioConfig } from "@/app/configuracion/actions";
 
 const TZ = "America/Bogota";
 
@@ -97,6 +98,8 @@ export default async function DoctorPage() {
 
   const doctorId = doctorData.id as string;
   const doctorNombre = doctorData.nombre as string;
+
+  const consultorioConfig = await getConsultorioConfig();
 
   const hoy = todayBogota();
   const hoyStr = toDateStr(hoy);
@@ -234,7 +237,7 @@ export default async function DoctorPage() {
         </div>
 
         {/* Acciones rápidas */}
-        <DoctorConfig doctorId={doctorId} doctorNombre={doctorNombre} />
+        <DoctorConfig doctorId={doctorId} doctorNombre={doctorNombre} consultorioConfig={consultorioConfig} />
 
         {/* Tarjetas de resumen */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

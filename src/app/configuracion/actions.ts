@@ -50,7 +50,7 @@ export async function updateConsultorioConfig(input: {
     .single();
 
   if (!profile?.consultorio_id) return { error: "Sin consultorio asignado." };
-  if (profile.rol !== "admin" && profile.rol !== "secretaria") return { error: "Sin permisos." };
+  if (!["admin", "secretaria", "doctor"].includes(profile.rol)) return { error: "Sin permisos." };
 
   const admin = createAdminClient();
   const { error } = await admin
