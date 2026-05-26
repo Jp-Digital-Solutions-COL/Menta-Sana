@@ -39,7 +39,7 @@ export async function uploadToCloudinary(blob: Blob, folder = "duqp1lxvk"): Prom
     `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
     { method: "POST", body: fd }
   );
-  if (!res.ok) throw new Error("Error al subir la imagen");
   const data = await res.json();
+  if (!res.ok) throw new Error(data?.error?.message ?? "Error al subir la imagen");
   return data.secure_url as string;
 }
