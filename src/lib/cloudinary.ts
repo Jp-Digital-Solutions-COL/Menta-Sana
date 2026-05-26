@@ -27,7 +27,7 @@ export async function convertToWebP(file: File, maxWidth = 400, quality = 0.82):
   });
 }
 
-export async function uploadToCloudinary(blob: Blob, folder = "agenda-medica/doctores"): Promise<string> {
+export async function uploadToCloudinary(blob: Blob, folder = "duqp1lxvk"): Promise<string> {
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
     throw new Error("Cloudinary no está configurado (variables de entorno faltantes)");
   }
