@@ -159,15 +159,47 @@ export async function getHorasDisponibles(
   return { slots, duracionCita: dur };
 }
 
-/** Devuelve las ubicaciones/consultorios de un doctor para mostrar en la creación de cita. */
+/** Devuelve las ubicaciones de un doctor: el consultorio principal primero, luego las extras. */
 export async function getUbicacionesParaCita(doctorId: string): Promise<UbicacionBasic[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("ubicaciones_doctor")
-    .select("id, nombre, direccion, telefono, maps_url, es_virtual")
-    .eq("doctor_id", doctorId)
-    .order("created_at");
-  return (data ?? []) as UbicacionBasic[];
+
+  const [{ data: { user } }, { data: extras }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("ubicaciones_doctor")
+      .select("id, nombre, direccion, telefono, maps_url, es_virtual")
+      .eq("doctor_id", doctorId)
+      .order("created_at"),
+  ]);
+
+  let principal: UbicacionBasic | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("consultorio_id")
+      .eq("id", user.id)
+      .single();
+    if (profile?.consultorio_id) {
+      const { data: consult } = await supabase
+        .from("consultorios")
+        .select("nombre, direccion, telefono_contacto, maps_url")
+        .eq("id", profile.consultorio_id)
+        .single();
+      if (consult) {
+        principal = {
+          id: "__principal__",
+          nombre: (consult.nombre as string | null) ?? "Consultorio principal",
+          direccion: consult.direccion as string | null,
+          telefono: consult.telefono_contacto as string | null,
+          maps_url: consult.maps_url as string | null,
+          es_virtual: false,
+        };
+      }
+    }
+  }
+
+  const result = (extras ?? []) as UbicacionBasic[];
+  return principal ? [principal, ...result] : result;
 }
 
 const MEET_PREFIX = "https://meet.google.com/";

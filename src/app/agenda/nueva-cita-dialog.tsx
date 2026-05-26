@@ -86,7 +86,8 @@ export default function NuevaCitaDialog({
     if (!doctorId) { setUbicaciones([]); setUbicacionId(""); return; }
     getUbicacionesParaCita(doctorId).then((ubs) => {
       setUbicaciones(ubs);
-      setUbicacionId("");
+      // Pre-select principal consultorio if available
+      setUbicacionId(ubs.length > 0 ? ubs[0].id : "");
     });
   }, [doctorId]);
 
@@ -151,7 +152,7 @@ export default function NuevaCitaDialog({
       inicioISO,
       finISO,
       motivo,
-      ubicacionId: ubicacionId || null,
+      ubicacionId: ubicacionId === "__principal__" ? null : (ubicacionId || null),
       meetLink: isVirtual ? meetLink : null,
     });
     if (result.error) {
@@ -363,7 +364,10 @@ export default function NuevaCitaDialog({
                                 ? <MonitorSmartphone className="h-3.5 w-3.5 text-teal-600 shrink-0" />
                                 : <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                               {u.nombre}
-                              {!u.es_virtual && u.direccion && (
+                              {u.id === "__principal__" && (
+                                <span className="text-muted-foreground text-xs">· Principal</span>
+                              )}
+                              {u.id !== "__principal__" && !u.es_virtual && u.direccion && (
                                 <span className="text-muted-foreground text-xs">· {u.direccion}</span>
                               )}
                               {u.es_virtual && (
