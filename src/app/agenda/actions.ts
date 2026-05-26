@@ -257,7 +257,8 @@ export async function createCita(input: {
 
   const token = crypto.randomUUID();
 
-  const { data: newCita, error } = await supabase
+  const admin = createAdminClient();
+  const { data: newCita, error } = await admin
     .from("citas")
     .insert({
       consultorio_id: profile.consultorio_id,
@@ -275,7 +276,10 @@ export async function createCita(input: {
     .select("id")
     .single();
 
-  if (error) return { error: "No se pudo crear la cita." };
+  if (error) {
+    console.error("[createCita] insert error:", error.message, error.code);
+    return { error: "No se pudo crear la cita." };
+  }
   revalidatePath("/agenda");
 
   // Enviar correo de confirmación (no bloquea la creación si falla)
