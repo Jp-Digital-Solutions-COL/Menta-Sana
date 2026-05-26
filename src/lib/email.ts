@@ -49,7 +49,7 @@ export async function sendConfirmacionCita(params: {
           <!-- Header -->
           <tr>
             <td style="background:#0D9488;padding:24px 32px;text-align:center;">
-              <img src="${APP_URL}/Menta-Sana_sin_slogan.png" alt="Med-Agenda" height="36"
+              <img src="${APP_URL}/Menta-Sana_sin_slogan.png" alt="Menta Sana" height="36"
                 style="height:36px;width:auto;display:inline-block;" />
             </td>
           </tr>
@@ -163,7 +163,7 @@ export async function sendConfirmacionCita(params: {
           <tr>
             <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:16px 32px;text-align:center;">
               <p style="margin:0;font-size:12px;color:#9ca3af;">
-                Enviado por <strong style="color:#6b7280;">Med-Agenda</strong> · Sistema de gestión médica
+                Enviado por <strong style="color:#6b7280;">Menta Sana</strong> · Sistema de gestión médica
               </p>
             </td>
           </tr>

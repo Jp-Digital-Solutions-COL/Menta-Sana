@@ -39,7 +39,7 @@ export default async function ConfiguracionPage() {
         <div className="flex items-center gap-3 px-4 h-12 max-w-5xl mx-auto">
           <Image
             src="/Menta-Sana_sin_slogan.png"
-            alt="Med-Agenda"
+            alt="Menta Sana"
             width={140}
             height={32}
             className="h-10 w-auto"

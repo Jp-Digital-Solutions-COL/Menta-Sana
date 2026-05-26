@@ -45,7 +45,7 @@ export default function LoginForm() {
     <div className="flex flex-col items-center gap-8 w-full max-w-md">
       <Image
         src="/Menta-Sana-completo.png"
-        alt="Med-Agenda"
+        alt="Menta Sana"
         width={840}
         height={330}
         className="h-[330px] w-auto max-w-full"

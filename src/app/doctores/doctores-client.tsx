@@ -70,7 +70,7 @@ export default function DoctoresClient({ doctores: initial, rol }: Props) {
         <Link href="/inicio">
           <Image
             src="/Menta-Sana_sin_slogan.png"
-            alt="Med-Agenda"
+            alt="Menta Sana"
             width={140}
             height={32}
             className="h-10 w-auto"

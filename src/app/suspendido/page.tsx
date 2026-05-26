@@ -25,7 +25,7 @@ export default async function SuspendidoPage() {
         <div className="flex justify-center">
           <Image
             src="/Menta-Sana_solo_logo.png"
-            alt="Med-Agenda"
+            alt="Menta Sana"
             width={72}
             height={72}
             className="h-16 w-auto opacity-80"

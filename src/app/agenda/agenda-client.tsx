@@ -222,7 +222,7 @@ export default function AgendaClient({
         <Link href="/inicio" title="Ir al inicio">
           <Image
             src="/Menta-Sana_solo_logo.png"
-            alt="Med-Agenda"
+            alt="Menta Sana"
             width={32}
             height={32}
             className="h-12 w-auto"

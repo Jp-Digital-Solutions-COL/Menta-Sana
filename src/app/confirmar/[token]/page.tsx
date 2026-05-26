@@ -63,7 +63,7 @@ export default async function ConfirmarCitaPage({ params }: PageProps) {
         <div className="bg-[#0D9488] px-8 py-6 flex justify-center">
           <Image
             src="/Menta-Sana_sin_slogan.png"
-            alt="Med-Agenda"
+            alt="Menta Sana"
             width={160}
             height={40}
             className="h-9 w-auto"
@@ -163,7 +163,7 @@ export default async function ConfirmarCitaPage({ params }: PageProps) {
 
         <div className="px-8 pb-6 text-center">
           <p className="text-xs text-slate-400">
-            Gestionado por <strong className="text-slate-500">Med-Agenda</strong> · Sistema de gestión médica
+            Gestionado por <strong className="text-slate-500">Menta Sana</strong> · Sistema de gestión médica
           </p>
         </div>
       </div>

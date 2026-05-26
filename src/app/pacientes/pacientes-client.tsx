@@ -55,7 +55,7 @@ export default function PacientesClient({ pacientes }: Props) {
         <Link href="/inicio">
           <Image
             src="/Menta-Sana_sin_slogan.png"
-            alt="Med-Agenda"
+            alt="Menta Sana"
             width={140}
             height={32}
             className="h-10 w-auto"

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Med-Agenda",
+  title: "Menta Sana",
   description: "Sistema de agenda para clínicas médicas",
 };
 

@@ -276,7 +276,7 @@ export default function AdminClient({
         <div className="flex items-center gap-3">
           <Image
             src="/Menta-Sana_solo_logo.png"
-            alt="Med-Agenda"
+            alt="Menta Sana"
             width={72}
             height={72}
             className="h-12 sm:h-16 w-auto shrink-0"
