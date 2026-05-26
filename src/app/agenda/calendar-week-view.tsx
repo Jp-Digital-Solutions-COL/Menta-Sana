@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import type { CitaConRel, DoctorBasic, HorarioCalendario } from "./types";
 import { ESTADO_CONFIG } from "./types";
-import { durationMinutes, formatTime, isSameDay, toDateStr, addDays } from "./utils";
+import { durationMinutes, formatTime, isSameDay, toDateStr, addDays, getBogotaHM, bogotaToISO } from "./utils";
 
 const HOUR_HEIGHT = 64;
 const GRID_START = 7;
@@ -26,7 +26,8 @@ const WORK_START = 8;
 const WORK_END = 18;
 
 function topPx(date: Date): number {
-  return (date.getHours() * 60 + date.getMinutes() - GRID_START * 60) * (HOUR_HEIGHT / 60);
+  const { h, m } = getBogotaHM(date);
+  return (h * 60 + m - GRID_START * 60) * (HOUR_HEIGHT / 60);
 }
 function timeTopPx(t: string): number {
   const [h, m] = t.split(":").map(Number);
@@ -167,10 +168,11 @@ export default function CalendarWeekView({
   const doctorIds = new Set(doctors.map((d) => d.id));
 
   const now = new Date();
+  const nowBog = getBogotaHM(now);
   const todayInWeek = weekDays.some((d) => isSameDay(d, today));
   const nowTop =
-    todayInWeek && now.getHours() >= GRID_START && now.getHours() < GRID_END
-      ? (now.getHours() * 60 + now.getMinutes() - GRID_START * 60) * (HOUR_HEIGHT / 60)
+    todayInWeek && nowBog.h >= GRID_START && nowBog.h < GRID_END
+      ? (nowBog.h * 60 + nowBog.m - GRID_START * 60) * (HOUR_HEIGHT / 60)
       : null;
 
   function getDayIdxFromClientX(clientX: number): number {
@@ -248,11 +250,13 @@ export default function CalendarWeekView({
 
     const { h, m } = topToTime(newTop);
     const targetDay = weekDays[targetDayIdx];
-    const newStart = new Date(targetDay.getFullYear(), targetDay.getMonth(), targetDay.getDate(), h, m);
+    const [y, mo, d] = toDateStr(targetDay).split("-").map(Number);
+    const newISOStart = bogotaToISO(y, mo, d, h, m);
+    const newStart = new Date(newISOStart);
     const origDate = new Date(cita.inicio);
     if (newStart.getTime() === origDate.getTime()) return;
 
-    await onReschedule(cita.id, newStart.toISOString(), new Date(newStart.getTime() + dur * 60000).toISOString());
+    await onReschedule(cita.id, newISOStart, new Date(newStart.getTime() + dur * 60000).toISOString());
   }
 
   return (

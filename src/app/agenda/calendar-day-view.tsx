@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import type { CitaConRel, DoctorBasic, HorarioCalendario } from "./types";
 import { ESTADO_CONFIG } from "./types";
-import { durationMinutes, formatTime, isSameDay } from "./utils";
+import { durationMinutes, formatTime, isSameDay, getBogotaHM, bogotaToISO, toDateStr } from "./utils";
 import { CalendarDays } from "lucide-react";
 
 const HOUR_HEIGHT = 64;
@@ -27,7 +27,8 @@ const WORK_START = 8;
 const WORK_END = 18;
 
 function topPx(date: Date) {
-  return (date.getHours() * 60 + date.getMinutes() - GRID_START * 60) * (HOUR_HEIGHT / 60);
+  const { h, m } = getBogotaHM(date);
+  return (h * 60 + m - GRID_START * 60) * (HOUR_HEIGHT / 60);
 }
 function timeTopPx(t: string): number {
   const [h, m] = t.split(":").map(Number);
@@ -164,9 +165,10 @@ export default function CalendarDayView({
   const dayCitas = citas.filter((c) => isSameDay(new Date(c.inicio), date));
   const isToday = isSameDay(date, today);
   const now = new Date();
+  const nowBog = getBogotaHM(now);
   const nowTop =
-    isToday && now.getHours() >= GRID_START && now.getHours() < GRID_END
-      ? (now.getHours() * 60 + now.getMinutes() - GRID_START * 60) * (HOUR_HEIGHT / 60)
+    isToday && nowBog.h >= GRID_START && nowBog.h < GRID_END
+      ? (nowBog.h * 60 + nowBog.m - GRID_START * 60) * (HOUR_HEIGHT / 60)
       : null;
 
   const showHeaders = doctors.length > 1;
@@ -222,11 +224,12 @@ export default function CalendarDayView({
     if (Math.abs(newTop - originalTop) < SNAP_PX / 2) return;
 
     const { h, m } = topToTime(newTop);
-    const orig = new Date(cita.inicio);
-    const newStart = new Date(orig.getFullYear(), orig.getMonth(), orig.getDate(), h, m);
-    if (newStart.getTime() === orig.getTime()) return;
+    const [y, mo, d] = toDateStr(date).split("-").map(Number);
+    const newISOStart = bogotaToISO(y, mo, d, h, m);
+    const newStart = new Date(newISOStart);
+    if (newStart.getTime() === new Date(cita.inicio).getTime()) return;
 
-    await onReschedule(cita.id, newStart.toISOString(), new Date(newStart.getTime() + dur * 60000).toISOString());
+    await onReschedule(cita.id, newISOStart, new Date(newStart.getTime() + dur * 60000).toISOString());
   }
 
   if (doctors.length === 0) {
