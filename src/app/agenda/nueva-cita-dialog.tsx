@@ -333,7 +333,7 @@ export default function NuevaCitaDialog({
                 {ubicaciones.length > 0 && (
                   <div className="space-y-1.5">
                     <Label className="text-sm">Consultorio</Label>
-                    <Select value={ubicacionId} onValueChange={setUbicacionId}>
+                    <Select value={ubicacionId} onValueChange={(v) => setUbicacionId(v ?? "")}>
                       <SelectTrigger>
                         <span data-slot="select-value" className="flex flex-1 text-left truncate text-sm">
                           {ubicacionId
