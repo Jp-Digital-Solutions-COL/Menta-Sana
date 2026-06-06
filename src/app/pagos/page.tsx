@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { todayBogota, toDateStr } from "@/app/agenda/utils";
-import { getPagosData, getDoctoresDelConsultorio } from "./actions";
+import { getPagosData, getDoctoresDelConsultorio, getPlantillaWhatsapp } from "./actions";
 import PagosClient from "./pagos-client";
 
 async function signOut() {
@@ -34,9 +34,10 @@ export default async function PagosPage() {
   const mesDesde = toDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
   const mesHasta = toDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-  const [initialData, doctores] = await Promise.all([
+  const [initialData, doctores, plantilla] = await Promise.all([
     getPagosData({ periodoDesde: mesDesde, periodoHasta: mesHasta, doctorId: userDoctorId }),
     isDoctor ? Promise.resolve([]) : getDoctoresDelConsultorio(),
+    getPlantillaWhatsapp(),
   ]);
 
   return (
@@ -47,6 +48,7 @@ export default async function PagosPage() {
       doctores={doctores}
       userRole={profile.rol}
       userDoctorId={userDoctorId}
+      initialPlantilla={plantilla}
       onSignOut={signOut}
     />
   );

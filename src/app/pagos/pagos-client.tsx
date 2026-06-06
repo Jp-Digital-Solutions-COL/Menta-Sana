@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import type { PagosData, DoctorItem, CuentaPorCobrar } from "./types";
-import { getPagosData } from "./actions";
+import { getPagosData, savePlantillaWhatsapp } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LogOut, MessageCircle, TrendingUp, Clock, AlertCircle, DollarSign } from "lucide-react";
+import { LogOut, MessageCircle, TrendingUp, Clock, AlertCircle, DollarSign, Pencil, Check, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -57,34 +57,34 @@ function formatFechaSesion(iso: string): string {
   }).format(new Date(iso));
 }
 
-function buildWhatsAppUrl(p: CuentaPorCobrar): string | null {
-  const tel = normalizarTelefono(p.telefono);
-  if (!tel) return null;
-  const monto = formatCOP(p.totalAdeudado);
-
-  let sesionText: string;
+function buildSesionText(p: CuentaPorCobrar): string {
   const fechas = (p.sesionFechas.length > 0 ? p.sesionFechas : [p.sesionMasAntigua]).map(
     formatFechaSesion
   );
-
   if (p.sesionesCount === 1) {
     const f = fechas[0];
-    sesionText =
-      f === "hoy" || f === "ayer"
-        ? `de la sesión de ${f}`
-        : `de la sesión del día ${f}`;
-  } else {
-    const lista =
-      fechas.length === 2
-        ? `${fechas[0]} y ${fechas[1]}`
-        : `${fechas.slice(0, -1).join(", ")} y ${fechas[fechas.length - 1]}`;
-    sesionText = `de las ${p.sesionesCount} sesiones de los días ${lista}`;
+    return f === "hoy" || f === "ayer"
+      ? `de la sesión de ${f}`
+      : `de la sesión del día ${f}`;
   }
+  const lista =
+    fechas.length === 2
+      ? `${fechas[0]} y ${fechas[1]}`
+      : `${fechas.slice(0, -1).join(", ")} y ${fechas[fechas.length - 1]}`;
+  return `de las ${p.sesionesCount} sesiones de los días ${lista}`;
+}
 
-  const msg =
-    `Hola ${p.nombre}, le recordamos cordialmente que tiene un saldo pendiente de ${monto} ` +
-    `${sesionText}. Por favor contáctenos para coordinar el pago. ¡Muchas gracias!`;
-  return `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
+function buildMensaje(plantilla: string, p: CuentaPorCobrar): string {
+  return plantilla
+    .replace(/\{nombre\}/g, p.nombre)
+    .replace(/\{monto\}/g, formatCOP(p.totalAdeudado))
+    .replace(/\{sesiones\}/g, buildSesionText(p));
+}
+
+function buildWhatsAppUrl(p: CuentaPorCobrar, plantilla: string): string | null {
+  const tel = normalizarTelefono(p.telefono);
+  if (!tel) return null;
+  return `https://wa.me/${tel}?text=${encodeURIComponent(buildMensaje(plantilla, p))}`;
 }
 
 function getMonthRange(): { desde: string; hasta: string } {
@@ -127,8 +127,15 @@ interface Props {
   doctores: DoctorItem[];
   userRole: string;
   userDoctorId: string | null;
+  initialPlantilla: string;
   onSignOut: () => Promise<void>;
 }
+
+const VARIABLES = [
+  { key: "{nombre}", label: "Nombre del paciente" },
+  { key: "{monto}", label: "Monto adeudado" },
+  { key: "{sesiones}", label: "Detalle de sesiones" },
+] as const;
 
 export default function PagosClient({
   initialData,
@@ -137,6 +144,7 @@ export default function PagosClient({
   doctores,
   userRole,
   userDoctorId,
+  initialPlantilla,
   onSignOut,
 }: Props) {
   const isDoctor = userRole === "doctor";
@@ -147,6 +155,38 @@ export default function PagosClient({
   const [customHasta, setCustomHasta] = useState(initialHasta);
   const [selectedDoctor, setSelectedDoctor] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
+
+  // Plantilla de mensaje
+  const [plantilla, setPlantilla] = useState(initialPlantilla);
+  const [editandoPlantilla, setEditandoPlantilla] = useState(false);
+  const [savingPlantilla, setSavingPlantilla] = useState(false);
+  const [plantillaSaved, setPlantillaSaved] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function insertarVariable(variable: string) {
+    const el = textareaRef.current;
+    if (!el) {
+      setPlantilla((prev) => prev + variable);
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const next = plantilla.slice(0, start) + variable + plantilla.slice(end);
+    setPlantilla(next);
+    requestAnimationFrame(() => {
+      el.selectionStart = start + variable.length;
+      el.selectionEnd = start + variable.length;
+      el.focus();
+    });
+  }
+
+  async function handleGuardarPlantilla() {
+    setSavingPlantilla(true);
+    await savePlantillaWhatsapp(plantilla);
+    setSavingPlantilla(false);
+    setPlantillaSaved(true);
+    setTimeout(() => setPlantillaSaved(false), 2500);
+  }
 
   function fetchData(desde: string, hasta: string, doctorSel: string) {
     startTransition(async () => {
@@ -448,6 +488,89 @@ export default function PagosClient({
           </Card>
         )}
 
+        {/* ── Plantilla de mensaje WhatsApp ────────────────────── */}
+        <div className="rounded-md border bg-background">
+          <button
+            onClick={() => setEditandoPlantilla((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/40 transition-colors rounded-md"
+          >
+            <span className="flex items-center gap-2">
+              <MessageCircle className="h-4 w-4 text-green-600" />
+              Mensaje de cobro por WhatsApp
+            </span>
+            {editandoPlantilla ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+
+          {editandoPlantilla && (
+            <div className="px-4 pb-4 space-y-3 border-t pt-3">
+              {/* Botones de variables */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Haz clic en una variable para insertarla donde está el cursor:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {VARIABLES.map((v) => (
+                    <button
+                      key={v.key}
+                      onClick={() => insertarVariable(v.key)}
+                      title={v.label}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 text-xs font-mono hover:bg-teal-100 transition-colors"
+                    >
+                      + {v.key}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Textarea */}
+              <textarea
+                ref={textareaRef}
+                value={plantilla}
+                onChange={(e) => setPlantilla(e.target.value)}
+                rows={4}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+
+              {/* Vista previa */}
+              <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Vista previa: </span>
+                {plantilla
+                  .replace(/\{nombre\}/g, "Juan Pérez")
+                  .replace(/\{monto\}/g, "$80.000")
+                  .replace(/\{sesiones\}/g, "de la sesión de ayer")}
+              </div>
+
+              {/* Guardar */}
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleGuardarPlantilla}
+                  disabled={savingPlantilla}
+                  size="sm"
+                  className="bg-teal-600 hover:bg-teal-700 text-white"
+                >
+                  {savingPlantilla ? "Guardando…" : "Guardar mensaje"}
+                </Button>
+                {plantillaSaved && (
+                  <span className="flex items-center gap-1 text-sm text-emerald-600">
+                    <Check className="h-4 w-4" />
+                    Guardado
+                  </span>
+                )}
+                <button
+                  onClick={() => setEditandoPlantilla(false)}
+                  className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* ── Cuentas por cobrar ───────────────────────────────── */}
         <div>
           <h2 className="text-lg font-semibold mb-3">
@@ -492,7 +615,7 @@ export default function PagosClient({
                 </thead>
                 <tbody className="divide-y">
                   {data.cuentasPorCobrar.map((p) => {
-                    const waUrl = buildWhatsAppUrl(p);
+                    const waUrl = buildWhatsAppUrl(p, plantilla);
                     return (
                       <tr key={p.pacienteId} className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3 font-medium">{p.nombre}</td>

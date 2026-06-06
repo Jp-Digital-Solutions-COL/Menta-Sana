@@ -1,8 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { toDateStr, startOfWeek, endOfWeek, todayBogota } from "@/app/agenda/utils";
 import type { CuentaPorCobrar, DoctorItem, MetodoItem, PagosData } from "./types";
+
+export const DEFAULT_PLANTILLA =
+  "Hola {nombre}, le recordamos cordialmente que tiene un saldo pendiente de {monto} {sesiones}. Por favor contáctenos para coordinar el pago. ¡Muchas gracias!";
 
 const METODO_LABELS: Record<string, string> = {
   efectivo: "Efectivo",
@@ -144,4 +148,50 @@ export async function getDoctoresDelConsultorio(): Promise<DoctorItem[]> {
     .eq("activo", true)
     .order("nombre");
   return (data ?? []) as DoctorItem[];
+}
+
+export async function getPlantillaWhatsapp(): Promise<string> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return DEFAULT_PLANTILLA;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("consultorio_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.consultorio_id) return DEFAULT_PLANTILLA;
+
+  const { data } = await supabase
+    .from("consultorios")
+    .select("plantilla_whatsapp_cobro")
+    .eq("id", profile.consultorio_id)
+    .single();
+
+  return (data as { plantilla_whatsapp_cobro: string | null } | null)
+    ?.plantilla_whatsapp_cobro ?? DEFAULT_PLANTILLA;
+}
+
+export async function savePlantillaWhatsapp(
+  plantilla: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("consultorio_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.consultorio_id) return { error: "Sin consultorio." };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("consultorios")
+    .update({ plantilla_whatsapp_cobro: plantilla.trim() || DEFAULT_PLANTILLA })
+    .eq("id", profile.consultorio_id);
+
+  if (error) return { error: "No se pudo guardar la plantilla." };
+  return {};
 }
