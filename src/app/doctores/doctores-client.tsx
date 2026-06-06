@@ -122,6 +122,7 @@ export default function DoctoresClient({ doctores: initial, rol }: Props) {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Especialidad</TableHead>
+                <TableHead>Tarifa</TableHead>
                 {!esSecretaria && (
                   <TableHead>
                     <div className="flex items-center gap-1.5">
@@ -165,6 +166,11 @@ export default function DoctoresClient({ doctores: initial, rol }: Props) {
                     {doctor.especialidad ?? (
                       <span className="text-muted-foreground/50">—</span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {doctor.tarifa_default != null
+                      ? `$${doctor.tarifa_default.toLocaleString("es-CO")}`
+                      : <span className="text-muted-foreground/50">—</span>}
                   </TableCell>
                   {!esSecretaria && (
                     <TableCell>

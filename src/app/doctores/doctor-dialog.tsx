@@ -36,6 +36,7 @@ export default function DoctorDialog({ open, onClose, doctor }: Props) {
   const [nombre, setNombre] = useState(doctor?.nombre ?? "");
   const [titulo, setTitulo] = useState<string | null>(doctor?.titulo ?? null);
   const [especialidad, setEspecialidad] = useState(doctor?.especialidad ?? "");
+  const [tarifa, setTarifa] = useState(doctor?.tarifa_default != null ? String(doctor.tarifa_default) : "");
   const [photoPreview, setPhotoPreview] = useState<string | null>(doctor?.foto_url ?? null);
   const [pendingBlob, setPendingBlob] = useState<Blob | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -114,9 +115,10 @@ export default function DoctorDialog({ open, onClose, doctor }: Props) {
       setUploading(false);
     }
 
+    const tarifaNum = tarifa.trim() !== "" ? parseInt(tarifa, 10) : null;
     const result = doctor
-      ? await updateDoctor(doctor.id, nombre, especialidad, fotoUrl, titulo)
-      : await createDoctor(nombre, especialidad, fotoUrl, titulo);
+      ? await updateDoctor(doctor.id, nombre, especialidad, fotoUrl, titulo, tarifaNum)
+      : await createDoctor(nombre, especialidad, fotoUrl, titulo, tarifaNum);
 
     if (result.error) {
       setError(result.error);
@@ -277,6 +279,23 @@ export default function DoctorDialog({ open, onClose, doctor }: Props) {
                 value={especialidad}
                 onChange={(e) => setEspecialidad(e.target.value)}
                 placeholder="Medicina general"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tarifa">
+                Tarifa por defecto{" "}
+                <span className="text-muted-foreground font-normal">(COP, opcional)</span>
+              </Label>
+              <Input
+                id="tarifa"
+                type="number"
+                min={0}
+                step={1000}
+                value={tarifa}
+                onChange={(e) => setTarifa(e.target.value)}
+                placeholder="ej: 150000"
                 disabled={loading}
               />
             </div>

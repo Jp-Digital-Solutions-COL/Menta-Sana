@@ -20,7 +20,8 @@ export async function createDoctor(
   nombre: string,
   especialidad: string,
   foto_url: string | null,
-  titulo: string | null
+  titulo: string | null,
+  tarifa_default: number | null
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
@@ -46,6 +47,7 @@ export async function createDoctor(
     foto_url,
     consultorio_id: profile.consultorio_id,
     activo: true,
+    tarifa_default,
   });
 
   if (error) return { error: "No se pudo crear el especialista." };
@@ -58,12 +60,13 @@ export async function updateDoctor(
   nombre: string,
   especialidad: string,
   foto_url: string | null,
-  titulo: string | null
+  titulo: string | null,
+  tarifa_default: number | null
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase
     .from("doctores")
-    .update({ nombre: nombre.trim(), titulo: titulo || null, especialidad: especialidad.trim() || null, foto_url })
+    .update({ nombre: nombre.trim(), titulo: titulo || null, especialidad: especialidad.trim() || null, foto_url, tarifa_default })
     .eq("id", id);
 
   if (error) return { error: "No se pudo actualizar el especialista." };

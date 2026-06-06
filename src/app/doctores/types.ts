@@ -7,6 +7,7 @@ export type Doctor = {
   foto_url: string | null;
   activo: boolean;
   consultorio_virtual: boolean;
+  tarifa_default: number | null;
   created_at: string;
 };
 
