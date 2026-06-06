@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { updateEstado, reagendar, deleteCita, getHorasDisponibles, sendConfirmacionEmail, getUbicacionParaCita, updateCitaTarifa, getPagos, createPago, updatePago, deletePago } from "./actions";
-import { getPlantillaRecordatorio, savePlantillaRecordatorio, DEFAULT_PLANTILLA_RECORDATORIO } from "@/app/configuracion/actions";
+import { getPlantillaRecordatorio, savePlantillaRecordatorio } from "@/app/configuracion/actions";
+import { DEFAULT_PLANTILLA_RECORDATORIO } from "@/app/configuracion/constants";
 import type { CitaConRel, EstadoCita, MetodoPago, Pago } from "./types";
 import { ESTADO_CONFIG, METODOS_PAGO } from "./types";
 import { durationMinutes, formatTime, toDateStr, bogotaToISO, parseTS } from "./utils";

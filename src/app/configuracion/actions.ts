@@ -68,8 +68,7 @@ export async function updateConsultorioConfig(input: {
   return {};
 }
 
-export const DEFAULT_PLANTILLA_RECORDATORIO =
-  "Hola {paciente}, le recordamos que tiene una cita con {doctor} el {fecha} a las {hora}. ¿Puede confirmarnos su asistencia? Gracias.";
+import { DEFAULT_PLANTILLA_RECORDATORIO } from "./constants";
 
 export async function getPlantillaRecordatorio(): Promise<string> {
   const supabase = await createClient();
