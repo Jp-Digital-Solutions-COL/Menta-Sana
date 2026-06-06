@@ -65,13 +65,13 @@ export default async function DoctorAdelatarPage() {
           <div className="h-4 w-px bg-border" />
           <nav className="flex gap-1">
             <Link
-              href="/doctor"
+              href="/especialista"
               className="text-sm text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
             >
               Inicio
             </Link>
             <Link
-              href="/doctor/agenda"
+              href="/especialista/agenda"
               className="text-sm text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
             >
               Agenda

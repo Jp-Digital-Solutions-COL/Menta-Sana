@@ -13,20 +13,21 @@ import type { ConsultorioConfig } from "@/app/configuracion/actions";
 interface Props {
   doctorId: string;
   doctorNombre: string;
+  consultorioVirtual: boolean;
   consultorioConfig: ConsultorioConfig | null;
 }
 
-export default function DoctorConfig({ doctorId, doctorNombre, consultorioConfig }: Props) {
+export default function DoctorConfig({ doctorId, doctorNombre, consultorioVirtual, consultorioConfig }: Props) {
   const [horariosOpen, setHorariosOpen] = useState(false);
   const [sedesOpen, setSedesOpen] = useState(false);
   const [consultorioOpen, setConsultorioOpen] = useState(false);
 
-  const doctor = { id: doctorId, nombre: doctorNombre } as Doctor;
+  const doctor = { id: doctorId, nombre: doctorNombre, consultorio_virtual: consultorioVirtual } as Doctor;
 
   return (
     <>
       <div className="flex flex-wrap gap-2">
-        <Link href="/doctor/agenda">
+        <Link href="/especialista/agenda">
           <Button className="gap-2 shadow-sm">
             <Plus className="h-4 w-4" />
             Agendar cita
@@ -38,7 +39,7 @@ export default function DoctorConfig({ doctorId, doctorNombre, consultorioConfig
             Crear paciente
           </Button>
         </Link>
-        <Link href="/doctor/adelantar">
+        <Link href="/especialista/adelantar">
           <Button className="gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-sm">
             <Zap className="h-4 w-4" />
             Adelantar citas

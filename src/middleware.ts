@@ -56,17 +56,17 @@ export async function middleware(request: NextRequest) {
     }
 
     if (pathname.startsWith("/suspendido")) {
-      return NextResponse.redirect(new URL(isDoctor ? "/doctor" : "/inicio", request.url));
+      return NextResponse.redirect(new URL(isDoctor ? "/especialista" : "/inicio", request.url));
     }
 
     // Redirigir desde /login al panel correspondiente
     if (pathname === "/login") {
-      return NextResponse.redirect(new URL(isDoctor ? "/doctor" : "/inicio", request.url));
+      return NextResponse.redirect(new URL(isDoctor ? "/especialista" : "/inicio", request.url));
     }
 
-    const isDoctorRoute = pathname === "/doctor" || pathname.startsWith("/doctor/");
+    const isDoctorRoute = pathname === "/especialista" || pathname.startsWith("/especialista/");
     if (isDoctor && !isDoctorRoute) {
-      return NextResponse.redirect(new URL("/doctor", request.url));
+      return NextResponse.redirect(new URL("/especialista", request.url));
     }
 
     if (!isDoctor && isDoctorRoute) {

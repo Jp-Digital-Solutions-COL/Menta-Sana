@@ -90,7 +90,7 @@ export default async function DoctorPage() {
   const admin = createAdminClient();
   const { data: doctorData } = await admin
     .from("doctores")
-    .select("id, nombre")
+    .select("id, nombre, consultorio_virtual")
     .eq("id", profile.doctor_id as string)
     .single();
 
@@ -98,6 +98,7 @@ export default async function DoctorPage() {
 
   const doctorId = doctorData.id as string;
   const doctorNombre = doctorData.nombre as string;
+  const consultorioVirtual = (doctorData.consultorio_virtual as boolean) ?? false;
 
   const consultorioConfig = await getConsultorioConfig();
 
@@ -206,13 +207,13 @@ export default async function DoctorPage() {
               Inicio
             </span>
             <Link
-              href="/doctor/agenda"
+              href="/especialista/agenda"
               className="text-sm text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
             >
               Agenda
             </Link>
             <Link
-              href="/doctor/adelantar"
+              href="/especialista/adelantar"
               className="text-sm text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
             >
               Adelantar
@@ -237,7 +238,7 @@ export default async function DoctorPage() {
         </div>
 
         {/* Acciones rápidas */}
-        <DoctorConfig doctorId={doctorId} doctorNombre={doctorNombre} consultorioConfig={consultorioConfig} />
+        <DoctorConfig doctorId={doctorId} doctorNombre={doctorNombre} consultorioVirtual={consultorioVirtual} consultorioConfig={consultorioConfig} />
 
         {/* Tarjetas de resumen */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
