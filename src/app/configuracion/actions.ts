@@ -67,3 +67,54 @@ export async function updateConsultorioConfig(input: {
   revalidatePath("/configuracion");
   return {};
 }
+
+export const DEFAULT_PLANTILLA_RECORDATORIO =
+  "Hola {paciente}, le recordamos que tiene una cita con {doctor} el {fecha} a las {hora}. ¿Puede confirmarnos su asistencia? Gracias.";
+
+export async function getPlantillaRecordatorio(): Promise<string> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return DEFAULT_PLANTILLA_RECORDATORIO;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("consultorio_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.consultorio_id) return DEFAULT_PLANTILLA_RECORDATORIO;
+
+  const { data } = await supabase
+    .from("consultorios")
+    .select("plantilla_recordatorio")
+    .eq("id", profile.consultorio_id)
+    .single();
+
+  return (data as { plantilla_recordatorio: string | null } | null)
+    ?.plantilla_recordatorio ?? DEFAULT_PLANTILLA_RECORDATORIO;
+}
+
+export async function savePlantillaRecordatorio(
+  plantilla: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("consultorio_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.consultorio_id) return { error: "Sin consultorio." };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("consultorios")
+    .update({
+      plantilla_recordatorio: plantilla.trim() || DEFAULT_PLANTILLA_RECORDATORIO,
+    })
+    .eq("id", profile.consultorio_id);
+
+  if (error) return { error: "No se pudo guardar la plantilla." };
+  return {};
+}
