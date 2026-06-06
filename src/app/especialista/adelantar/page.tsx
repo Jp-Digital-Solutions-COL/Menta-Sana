@@ -34,7 +34,7 @@ export default async function DoctorAdelatarPage() {
   const admin = createAdminClient();
   const { data: doctorData } = await admin
     .from("doctores")
-    .select("id, nombre, titulo, especialidad, activo, bloqueado_pago")
+    .select("id, nombre, titulo, especialidad, activo, bloqueado_pago, tarifa_default")
     .eq("id", profile.doctor_id as string)
     .single();
 
@@ -47,6 +47,7 @@ export default async function DoctorAdelatarPage() {
     especialidad: (doctorData.especialidad as string | null) ?? null,
     activo: (doctorData.activo as boolean) ?? true,
     bloqueado_pago: (doctorData.bloqueado_pago as boolean) ?? false,
+    tarifa_default: (doctorData.tarifa_default as number | null) ?? null,
   };
 
   return (
