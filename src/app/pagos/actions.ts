@@ -88,7 +88,7 @@ export async function getPagosData(input: {
 
   // Exclude placeholder patients
   const citas = (rawCitas ?? []).filter(
-    (c) => (c.pacientes as { nombre: string } | null)?.nombre !== "__bloqueo__"
+    (c) => (c.pacientes as unknown as { nombre: string } | null)?.nombre !== "__bloqueo__"
   );
 
   const citaIds = citas.map((c) => c.id);
@@ -109,7 +109,7 @@ export async function getPagosData(input: {
     const totalPagado = pagosMapCCP[c.id] ?? 0;
     const saldo = Number(c.tarifa) - totalPagado;
     if (saldo <= 0) continue;
-    const pac = c.pacientes as { nombre: string; telefono: string | null } | null;
+    const pac = c.pacientes as unknown as { nombre: string; telefono: string | null } | null;
     if (!patientMap[c.paciente_id]) {
       patientMap[c.paciente_id] = {
         pacienteId: c.paciente_id,
