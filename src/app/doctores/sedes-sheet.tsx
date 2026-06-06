@@ -99,10 +99,12 @@ export default function SedesSheet({ doctor, onClose }: Props) {
                   ? <MonitorSmartphone className="h-3.5 w-3.5 text-teal-600 shrink-0" />
                   : <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                 <div>
-                  <p className="text-sm font-medium">Solo atiende virtual</p>
-                  {principalVirtual && (
-                    <p className="text-xs text-teal-600">Las citas requerirán link de Google Meet</p>
-                  )}
+                  <p className="text-sm font-medium">Consultorio principal virtual</p>
+                  <p className="text-xs text-muted-foreground">
+                    {principalVirtual
+                      ? "Las citas aquí requerirán link de Google Meet"
+                      : "Las citas aquí son presenciales"}
+                  </p>
                 </div>
               </div>
               <Switch
