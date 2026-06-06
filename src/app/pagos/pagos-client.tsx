@@ -61,16 +61,28 @@ function buildSesionText(p: CuentaPorCobrar): string {
   const fechas = (p.sesionFechas.length > 0 ? p.sesionFechas : [p.sesionMasAntigua]).map(
     formatFechaSesion
   );
+  // Deduplicate preserving order (varias sesiones el mismo día → un solo label)
+  const unicas = fechas.filter((f, i) => fechas.indexOf(f) === i);
+
   if (p.sesionesCount === 1) {
-    const f = fechas[0];
+    const f = unicas[0];
     return f === "hoy" || f === "ayer"
       ? `de la sesión de ${f}`
       : `de la sesión del día ${f}`;
   }
+
+  if (unicas.length === 1) {
+    // Todas las sesiones caen el mismo día
+    const f = unicas[0];
+    return f === "hoy" || f === "ayer"
+      ? `de las ${p.sesionesCount} sesiones de ${f}`
+      : `de las ${p.sesionesCount} sesiones del día ${f}`;
+  }
+
   const lista =
-    fechas.length === 2
-      ? `${fechas[0]} y ${fechas[1]}`
-      : `${fechas.slice(0, -1).join(", ")} y ${fechas[fechas.length - 1]}`;
+    unicas.length === 2
+      ? `${unicas[0]} y ${unicas[1]}`
+      : `${unicas.slice(0, -1).join(", ")} y ${unicas[unicas.length - 1]}`;
   return `de las ${p.sesionesCount} sesiones de los días ${lista}`;
 }
 
