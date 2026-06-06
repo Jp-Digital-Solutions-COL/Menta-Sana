@@ -17,6 +17,7 @@ export type Cita = {
   fin: string;       // timestamptz — ISO 8601 con offset
   estado: EstadoCita;
   motivo: string | null;
+  tarifa: number | null;
   creado_por: string;
   creado_en: string;
   token_confirmacion: string | null;
@@ -41,7 +42,32 @@ export type DoctorBasic = {
   especialidad: string | null;
   activo: boolean;
   bloqueado_pago: boolean;
+  tarifa_default: number | null;
 };
+
+export type MetodoPago = "efectivo" | "transferencia" | "tarjeta" | "bold" | "wompi" | "nequi" | "daviplata" | "otro";
+
+export type Pago = {
+  id: string;
+  cita_id: string;
+  monto: number;
+  metodo_pago: MetodoPago;
+  fecha_pago: string;
+  referencia: string | null;
+  notas: string | null;
+  created_at: string;
+};
+
+export const METODOS_PAGO: { value: MetodoPago; label: string }[] = [
+  { value: "efectivo", label: "Efectivo" },
+  { value: "transferencia", label: "Transferencia" },
+  { value: "tarjeta", label: "Tarjeta" },
+  { value: "nequi", label: "Nequi" },
+  { value: "daviplata", label: "Daviplata" },
+  { value: "bold", label: "Bold" },
+  { value: "wompi", label: "Wompi" },
+  { value: "otro", label: "Otro" },
+];
 
 export type TipoDocumento = "RC" | "TI" | "CC" | "CE";
 

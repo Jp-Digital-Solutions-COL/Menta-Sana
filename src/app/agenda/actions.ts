@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { CitaConRel, DoctorBasic, EstadoCita, HorarioCalendario, PacienteBasic } from "./types";
+import type { CitaConRel, DoctorBasic, EstadoCita, HorarioCalendario, MetodoPago, PacienteBasic, Pago } from "./types";
 import { sendConfirmacionCita } from "@/lib/email";
 
 export async function getDoctoresActivos(): Promise<DoctorBasic[]> {
@@ -22,7 +22,7 @@ export async function getDoctoresActivos(): Promise<DoctorBasic[]> {
 
   let query = supabase
     .from("doctores")
-    .select("id, nombre, titulo, especialidad, activo, bloqueado_pago")
+    .select("id, nombre, titulo, especialidad, activo, bloqueado_pago, tarifa_default")
     .eq("activo", true)
     .order("nombre");
 
@@ -219,6 +219,7 @@ export async function createCita(input: {
   motivo: string;
   ubicacionId?: string | null;
   meetLink?: string | null;
+  tarifa?: number | null;
 }): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
@@ -293,6 +294,7 @@ export async function createCita(input: {
       token_confirmacion: token,
       ubicacion_id: input.ubicacionId ?? null,
       meet_link: meetLinkFinal,
+      tarifa: input.tarifa ?? null,
     })
     .select("id")
     .single();
@@ -644,6 +646,120 @@ export async function getUbicacionParaCita(
     .single();
   const c = consult as { nombre?: string | null; direccion?: string | null; maps_url?: string | null } | null;
   return { nombre: c?.nombre ?? null, direccion: c?.direccion ?? null, mapsUrl: c?.maps_url ?? null };
+}
+
+export async function getCitaConRelById(id: string): Promise<CitaConRel | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("citas")
+    .select("*, doctores(id, nombre, titulo), pacientes(id, nombre, telefono, cedula, email, tipo_documento)")
+    .eq("id", id)
+    .single();
+  if (!data) return null;
+  const c = data as CitaConRel;
+  return c.pacientes?.nombre === "__bloqueo__" ? { ...c, estado: "bloqueada" as const } : c;
+}
+
+export async function updateCitaTarifa(
+  citaId: string,
+  tarifa: number | null
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("citas")
+    .update({ tarifa })
+    .eq("id", citaId);
+  if (error) return { error: "No se pudo actualizar la tarifa." };
+  revalidatePath("/agenda");
+  return {};
+}
+
+export async function getPagos(citaId: string): Promise<Pago[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("pagos")
+    .select("id, cita_id, monto, metodo_pago, fecha_pago, referencia, notas, created_at")
+    .eq("cita_id", citaId)
+    .order("created_at");
+  return (data ?? []) as Pago[];
+}
+
+export async function createPago(input: {
+  citaId: string;
+  pacienteId: string;
+  doctorId: string;
+  monto: number;
+  metodoPago: MetodoPago;
+  fechaPago: string;
+  referencia?: string | null;
+  notas?: string | null;
+}): Promise<{ data?: Pago; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("consultorio_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile?.consultorio_id) return { error: "Sin consultorio." };
+
+  const { data, error } = await supabase
+    .from("pagos")
+    .insert({
+      consultorio_id: profile.consultorio_id,
+      cita_id: input.citaId,
+      paciente_id: input.pacienteId,
+      doctor_id: input.doctorId,
+      monto: input.monto,
+      metodo_pago: input.metodoPago,
+      estado: "pagado",
+      fecha_pago: input.fechaPago,
+      referencia: input.referencia?.trim() || null,
+      notas: input.notas?.trim() || null,
+      registrado_por: user.id,
+    })
+    .select("id, cita_id, monto, metodo_pago, fecha_pago, referencia, notas, created_at")
+    .single();
+
+  if (error) return { error: error.message };
+  revalidatePath("/agenda");
+  return { data: data as Pago };
+}
+
+export async function updatePago(
+  id: string,
+  input: {
+    monto: number;
+    metodoPago: MetodoPago;
+    fechaPago: string;
+    referencia?: string | null;
+    notas?: string | null;
+  }
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("pagos")
+    .update({
+      monto: input.monto,
+      metodo_pago: input.metodoPago,
+      fecha_pago: input.fechaPago,
+      referencia: input.referencia?.trim() || null,
+      notas: input.notas?.trim() || null,
+    })
+    .eq("id", id);
+  if (error) return { error: "No se pudo actualizar el pago." };
+  revalidatePath("/agenda");
+  return {};
+}
+
+export async function deletePago(id: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("pagos").delete().eq("id", id);
+  if (error) return { error: "No se pudo eliminar el pago." };
+  revalidatePath("/agenda");
+  return {};
 }
 
 export async function getHorariosParaCalendario(

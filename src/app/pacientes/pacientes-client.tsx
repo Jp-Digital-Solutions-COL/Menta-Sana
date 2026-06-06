@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import type { Paciente } from "./types";
 import PacienteDialog from "./paciente-dialog";
+import CitaDetailSheet from "@/app/agenda/cita-detail-sheet";
+import { getCitaConRelById } from "@/app/agenda/actions";
+import type { CitaConRel } from "@/app/agenda/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +29,10 @@ export default function PacientesClient({ pacientes }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Paciente | null>(null);
 
-  // Filtro en vivo por nombre (insensible a mayúsculas/acentos)
+  // Pagos tab integration
+  const [pagosRefreshKey, setPagosRefreshKey] = useState(0);
+  const [citaDetail, setCitaDetail] = useState<CitaConRel | null>(null);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return pacientes;
@@ -46,6 +52,11 @@ export default function PacientesClient({ pacientes }: Props) {
   function handleClose() {
     setDialogOpen(false);
     setEditing(null);
+  }
+
+  async function handleCitaClick(citaId: string) {
+    const cita = await getCitaConRelById(citaId);
+    if (cita) setCitaDetail(cita);
   }
 
   return (
@@ -104,7 +115,6 @@ export default function PacientesClient({ pacientes }: Props) {
         )}
       </div>
 
-      {/* Contador de resultados cuando hay búsqueda activa */}
       {search && (
         <p className="text-sm text-muted-foreground -mt-2">
           {filtered.length === 0
@@ -116,9 +126,7 @@ export default function PacientesClient({ pacientes }: Props) {
       {/* Tabla o estado vacío */}
       {pacientes.length === 0 ? (
         <div className="rounded-lg border border-dashed py-16 text-center">
-          <p className="text-muted-foreground text-sm">
-            No hay pacientes registrados.
-          </p>
+          <p className="text-muted-foreground text-sm">No hay pacientes registrados.</p>
           <Button variant="outline" className="mt-4" onClick={handleAdd}>
             Agregar el primer paciente
           </Button>
@@ -153,14 +161,10 @@ export default function PacientesClient({ pacientes }: Props) {
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.nombre}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {p.telefono ?? (
-                      <span className="text-muted-foreground/40">—</span>
-                    )}
+                    {p.telefono ?? <span className="text-muted-foreground/40">—</span>}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {p.email ?? (
-                      <span className="text-muted-foreground/40">—</span>
-                    )}
+                    {p.email ?? <span className="text-muted-foreground/40">—</span>}
                   </TableCell>
                   <TableCell>
                     {p.notas ? (
@@ -169,9 +173,7 @@ export default function PacientesClient({ pacientes }: Props) {
                         title={p.notas}
                       >
                         <FileText className="h-3.5 w-3.5 shrink-0" />
-                        <span className="max-w-[160px] truncate">
-                          {p.notas}
-                        </span>
+                        <span className="max-w-[160px] truncate">{p.notas}</span>
                       </span>
                     ) : (
                       <span className="text-muted-foreground/40">—</span>
@@ -200,6 +202,16 @@ export default function PacientesClient({ pacientes }: Props) {
         open={dialogOpen}
         onClose={handleClose}
         paciente={editing}
+        onCitaClick={handleCitaClick}
+        pagosRefreshKey={pagosRefreshKey}
+      />
+
+      <CitaDetailSheet
+        cita={citaDetail}
+        onClose={() => setCitaDetail(null)}
+        onUpdate={async () => {
+          setPagosRefreshKey((k) => k + 1);
+        }}
       />
     </div>
   );

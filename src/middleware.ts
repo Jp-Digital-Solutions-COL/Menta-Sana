@@ -64,7 +64,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(isDoctor ? "/especialista" : "/inicio", request.url));
     }
 
-    const isDoctorRoute = pathname === "/especialista" || pathname.startsWith("/especialista/");
+    const isDoctorRoute =
+      pathname === "/especialista" ||
+      pathname.startsWith("/especialista/") ||
+      pathname === "/pagos";
     if (isDoctor && !isDoctorRoute) {
       return NextResponse.redirect(new URL("/especialista", request.url));
     }

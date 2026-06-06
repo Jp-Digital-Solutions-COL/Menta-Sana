@@ -18,3 +18,16 @@ export type PacienteFields = {
   tipo_documento: string;
   notas: string;
 };
+
+export type ResumenCitaPago = {
+  citaId: string;
+  inicio: string;
+  estado: string;
+  motivo: string | null;
+  tarifa: number | null;
+  doctorNombre: string;
+  doctorTitulo: string | null;
+  totalPagado: number;
+  saldo: number | null;
+  estadoPago: "pagado" | "parcial" | "pendiente";
+};

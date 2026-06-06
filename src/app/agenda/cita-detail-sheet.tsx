@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { updateEstado, reagendar, deleteCita, getHorasDisponibles, sendConfirmacionEmail, getUbicacionParaCita } from "./actions";
-import type { CitaConRel, EstadoCita } from "./types";
-import { ESTADO_CONFIG } from "./types";
+import { updateEstado, reagendar, deleteCita, getHorasDisponibles, sendConfirmacionEmail, getUbicacionParaCita, updateCitaTarifa, getPagos, createPago, updatePago, deletePago } from "./actions";
+import type { CitaConRel, EstadoCita, MetodoPago, Pago } from "./types";
+import { ESTADO_CONFIG, METODOS_PAGO } from "./types";
 import { durationMinutes, formatTime, toDateStr, bogotaToISO, parseTS } from "./utils";
 import {
   Sheet,
@@ -21,6 +21,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   CalendarDays,
   Clock,
@@ -31,6 +32,11 @@ import {
   Trash2,
   ChevronDown,
   ExternalLink,
+  DollarSign,
+  Pencil,
+  Check,
+  X as XIcon,
+  Plus,
 } from "lucide-react";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -107,6 +113,25 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
   // Ubicación para mensaje de WhatsApp
   const [ubicacionWA, setUbicacionWA] = useState<{ nombre: string | null; direccion: string | null; mapsUrl: string | null } | null>(null);
 
+  // Tarifa inline edit
+  const [editingTarifa, setEditingTarifa] = useState(false);
+  const [tarifaInput, setTarifaInput] = useState("");
+  const [savingTarifa, setSavingTarifa] = useState(false);
+
+  // Pagos
+  const [pagos, setPagos] = useState<Pago[]>([]);
+  const [loadingPagos, setLoadingPagos] = useState(false);
+  const [showPagoForm, setShowPagoForm] = useState(false);
+  const [editingPagoId, setEditingPagoId] = useState<string | null>(null);
+  // Pago form state
+  const [pagoMonto, setPagoMonto] = useState("");
+  const [pagoMetodo, setPagoMetodo] = useState<MetodoPago>("efectivo");
+  const [pagoFecha, setPagoFecha] = useState("");
+  const [pagoRef, setPagoRef] = useState("");
+  const [pagoNotas, setPagoNotas] = useState("");
+  const [savingPago, setSavingPago] = useState(false);
+  const [pagoError, setPagoError] = useState("");
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -123,6 +148,15 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
     setReschedSlots([]);
     setUbicacionWA(null);
     getUbicacionParaCita(cita.doctores.id, cita.id).then(setUbicacionWA);
+    // Tarifa
+    setEditingTarifa(false);
+    setTarifaInput(cita.tarifa != null ? String(cita.tarifa) : "");
+    // Pagos
+    setShowPagoForm(false);
+    setEditingPagoId(null);
+    setPagoError("");
+    setLoadingPagos(true);
+    getPagos(cita.id).then((p) => { setPagos(p); setLoadingPagos(false); });
   }, [cita?.id]);
 
   // Load slots when date changes in reagendar mode
@@ -171,6 +205,67 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
     else { await onUpdate(); onClose(); }
   }
 
+  async function handleSaveTarifa() {
+    if (!cita) return;
+    setSavingTarifa(true);
+    const val = tarifaInput.trim() !== "" ? parseFloat(tarifaInput) : null;
+    await updateCitaTarifa(cita.id, val);
+    setSavingTarifa(false);
+    setEditingTarifa(false);
+    await onUpdate();
+  }
+
+  function openPagoForm(pago?: Pago) {
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
+    if (pago) {
+      setEditingPagoId(pago.id);
+      setPagoMonto(String(pago.monto));
+      setPagoMetodo(pago.metodo_pago);
+      setPagoFecha(pago.fecha_pago.slice(0, 10));
+      setPagoRef(pago.referencia ?? "");
+      setPagoNotas(pago.notas ?? "");
+    } else {
+      setEditingPagoId(null);
+      setPagoMonto(cita?.tarifa != null ? String(cita.tarifa) : "");
+      setPagoMetodo("efectivo");
+      setPagoFecha(today);
+      setPagoRef("");
+      setPagoNotas("");
+    }
+    setPagoError("");
+    setShowPagoForm(true);
+  }
+
+  function closePagoForm() {
+    setShowPagoForm(false);
+    setEditingPagoId(null);
+    setPagoError("");
+  }
+
+  async function handleSavePago() {
+    if (!cita || !pagoMonto.trim()) return;
+    const monto = parseFloat(pagoMonto);
+    if (isNaN(monto) || monto <= 0) { setPagoError("Ingresa un monto válido."); return; }
+    setSavingPago(true);
+    setPagoError("");
+    if (editingPagoId) {
+      const r = await updatePago(editingPagoId, { monto, metodoPago: pagoMetodo, fechaPago: pagoFecha, referencia: pagoRef || null, notas: pagoNotas || null });
+      if (r.error) { setPagoError(r.error); setSavingPago(false); return; }
+      setPagos((prev) => prev.map((p) => p.id === editingPagoId ? { ...p, monto, metodo_pago: pagoMetodo, fecha_pago: pagoFecha, referencia: pagoRef || null, notas: pagoNotas || null } : p));
+    } else {
+      const r = await createPago({ citaId: cita.id, pacienteId: cita.paciente_id, doctorId: cita.doctor_id, monto, metodoPago: pagoMetodo, fechaPago: pagoFecha, referencia: pagoRef || null, notas: pagoNotas || null });
+      if (r.error) { setPagoError(r.error); setSavingPago(false); return; }
+      if (r.data) setPagos((prev) => [...prev, r.data!]);
+    }
+    setSavingPago(false);
+    closePagoForm();
+  }
+
+  async function handleDeletePago(id: string) {
+    const r = await deletePago(id);
+    if (!r.error) setPagos((prev) => prev.filter((p) => p.id !== id));
+  }
+
   if (!cita) return null;
 
   const dt = parseTS(cita.inicio);
@@ -179,6 +274,13 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
   const ec = ESTADO_CONFIG[estado];
   const isBloqueada = cita.estado === "bloqueada";
   const tel = cita.pacientes?.telefono ?? null;
+
+  const totalPagado = pagos.reduce((s, p) => s + Number(p.monto), 0);
+  const saldoPendiente = cita.tarifa != null ? cita.tarifa - totalPagado : null;
+  const estadoPago =
+    pagos.length === 0 ? "pendiente"
+    : cita.tarifa != null && totalPagado >= cita.tarifa ? "pagado"
+    : "parcial";
 
   const dateLabel = new Intl.DateTimeFormat("es-CO", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -295,6 +397,58 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
               <p className="text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
                 {cita.motivo}
               </p>
+            )}
+
+            {/* Tarifa */}
+            {!isBloqueada && (
+              <div className="flex items-center gap-3 text-sm">
+                <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
+                {editingTarifa ? (
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={tarifaInput}
+                      onChange={(e) => setTarifaInput(e.target.value)}
+                      placeholder="ej: 150000"
+                      className="h-7 text-sm w-32"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveTarifa}
+                      disabled={savingTarifa}
+                      className="text-teal-700 hover:text-teal-800 p-0.5"
+                      title="Guardar"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setEditingTarifa(false); setTarifaInput(cita.tarifa != null ? String(cita.tarifa) : ""); }}
+                      className="text-muted-foreground hover:text-foreground p-0.5"
+                      title="Cancelar"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className={cita.tarifa != null ? "font-medium" : "text-muted-foreground/60"}>
+                      {cita.tarifa != null ? `$${Number(cita.tarifa).toLocaleString("es-CO")}` : "Sin tarifa"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { setTarifaInput(cita.tarifa != null ? String(cita.tarifa) : ""); setEditingTarifa(true); }}
+                      className="text-muted-foreground hover:text-foreground p-0.5"
+                      title="Editar tarifa"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -499,6 +653,166 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
 
               {error && action !== "reagendar" && (
                 <p className="text-xs text-destructive">{error}</p>
+              )}
+            </div>
+          )}
+
+          {/* Pagos */}
+          {!isBloqueada && (
+            <div className="px-6 py-4 border-b space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-semibold">Pago</span>
+                  {pagos.length > 0 && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                      estadoPago === "pagado" ? "bg-emerald-100 text-emerald-700"
+                      : estadoPago === "parcial" ? "bg-amber-100 text-amber-700"
+                      : "bg-slate-100 text-slate-600"
+                    }`}>
+                      {estadoPago === "pagado" ? "Pagado" : estadoPago === "parcial" ? "Parcial" : "Pendiente"}
+                    </span>
+                  )}
+                </div>
+                {!showPagoForm && (
+                  <button
+                    type="button"
+                    onClick={() => openPagoForm()}
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Registrar pago
+                  </button>
+                )}
+              </div>
+
+              {loadingPagos ? (
+                <p className="text-xs text-muted-foreground">Cargando...</p>
+              ) : (
+                <>
+                  {pagos.length > 0 && (
+                    <div className="space-y-2">
+                      {pagos.map((p) => (
+                        <div key={p.id} className="flex items-start justify-between gap-2 rounded-lg border px-3 py-2 bg-muted/20 text-sm">
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">${Number(p.monto).toLocaleString("es-CO")}</span>
+                              <span className="text-xs text-muted-foreground capitalize">
+                                {METODOS_PAGO.find((m) => m.value === p.metodo_pago)?.label ?? p.metodo_pago}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(p.fecha_pago + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                              {p.referencia && ` · ${p.referencia}`}
+                            </p>
+                            {p.notas && <p className="text-xs text-muted-foreground italic">{p.notas}</p>}
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => openPagoForm(p)}
+                              className="text-muted-foreground hover:text-foreground p-0.5"
+                              title="Editar"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePago(p.id)}
+                              className="text-muted-foreground hover:text-destructive p-0.5"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {saldoPendiente != null && (
+                        <div className="flex justify-between items-center px-1 text-xs text-muted-foreground">
+                          <span>Total pagado: <span className="font-medium text-foreground">${totalPagado.toLocaleString("es-CO")}</span></span>
+                          <span className={saldoPendiente <= 0 ? "text-emerald-700 font-medium" : "text-amber-700 font-medium"}>
+                            {saldoPendiente <= 0 ? "Sin saldo pendiente" : `Saldo: $${saldoPendiente.toLocaleString("es-CO")}`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {pagos.length === 0 && !showPagoForm && (
+                    <p className="text-xs text-muted-foreground">No hay pagos registrados.</p>
+                  )}
+
+                  {showPagoForm && (
+                    <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {editingPagoId ? "Editar pago" : "Nuevo pago"}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Monto (COP)</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="any"
+                            value={pagoMonto}
+                            onChange={(e) => setPagoMonto(e.target.value)}
+                            placeholder="150000"
+                            className="h-8 text-sm"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Método</label>
+                          <select
+                            value={pagoMetodo}
+                            onChange={(e) => setPagoMetodo(e.target.value as MetodoPago)}
+                            className="flex h-8 w-full rounded-lg border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          >
+                            {METODOS_PAGO.map((m) => (
+                              <option key={m.value} value={m.value}>{m.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Fecha de pago</label>
+                        <input
+                          type="date"
+                          value={pagoFecha}
+                          onChange={(e) => setPagoFecha(e.target.value)}
+                          className="flex h-8 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Referencia <span className="font-normal">(opcional)</span></label>
+                        <Input
+                          value={pagoRef}
+                          onChange={(e) => setPagoRef(e.target.value)}
+                          placeholder="# transferencia, recibo..."
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Notas <span className="font-normal">(opcional)</span></label>
+                        <Input
+                          value={pagoNotas}
+                          onChange={(e) => setPagoNotas(e.target.value)}
+                          placeholder="Observaciones..."
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      {pagoError && <p className="text-xs text-destructive">{pagoError}</p>}
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" size="sm" className="flex-1 h-8 text-xs" onClick={closePagoForm} disabled={savingPago}>
+                          Cancelar
+                        </Button>
+                        <Button type="button" size="sm" className="flex-1 h-8 text-xs" onClick={handleSavePago} disabled={!pagoMonto.trim() || !pagoFecha || savingPago}>
+                          {savingPago ? "Guardando..." : editingPagoId ? "Actualizar" : "Registrar"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

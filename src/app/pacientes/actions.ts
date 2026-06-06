@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { Paciente, PacienteFields } from "./types";
+import type { Paciente, PacienteFields, ResumenCitaPago } from "./types";
 
 export async function getPacientes(): Promise<Paciente[]> {
   const supabase = await createClient();
@@ -70,4 +70,55 @@ export async function updatePaciente(
   if (error) return { error: "No se pudo actualizar el paciente." };
   revalidatePath("/pacientes");
   return {};
+}
+
+export async function getResumenPagosPaciente(
+  pacienteId: string
+): Promise<ResumenCitaPago[]> {
+  const supabase = await createClient();
+
+  const { data: citas } = await supabase
+    .from("citas")
+    .select("id, inicio, estado, motivo, tarifa, doctores(nombre, titulo)")
+    .eq("paciente_id", pacienteId)
+    .neq("estado", "bloqueada")
+    .order("inicio", { ascending: false });
+
+  if (!citas || citas.length === 0) return [];
+
+  const citaIds = citas.map((c) => c.id);
+
+  const { data: pagos } = await supabase
+    .from("pagos")
+    .select("cita_id, monto")
+    .in("cita_id", citaIds);
+
+  const pagosMap: Record<string, number> = {};
+  for (const p of pagos ?? []) {
+    pagosMap[p.cita_id] = (pagosMap[p.cita_id] ?? 0) + Number(p.monto);
+  }
+
+  return citas.map((c) => {
+    const doc = c.doctores as { nombre: string; titulo: string | null } | null;
+    const totalPagado = pagosMap[c.id] ?? 0;
+    const tarifa = c.tarifa != null ? Number(c.tarifa) : null;
+    const saldo = tarifa != null ? tarifa - totalPagado : null;
+    const estadoPago =
+      totalPagado === 0 ? "pendiente"
+      : tarifa != null && totalPagado >= tarifa ? "pagado"
+      : "parcial";
+
+    return {
+      citaId: c.id,
+      inicio: c.inicio,
+      estado: c.estado,
+      motivo: c.motivo,
+      tarifa,
+      doctorNombre: doc?.nombre ?? "",
+      doctorTitulo: doc?.titulo ?? null,
+      totalPagado,
+      saldo,
+      estadoPago,
+    } as ResumenCitaPago;
+  });
 }

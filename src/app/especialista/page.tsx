@@ -218,6 +218,12 @@ export default async function DoctorPage() {
             >
               Adelantar
             </Link>
+            <Link
+              href="/pagos"
+              className="text-sm text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
+            >
+              Pagos
+            </Link>
           </nav>
           <form action={signOut} className="ml-auto">
             <Button variant="ghost" size="sm" type="submit" className="gap-1.5 text-muted-foreground">

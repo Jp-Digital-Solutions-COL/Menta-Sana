@@ -73,6 +73,7 @@ export default function NuevaCitaDialog({
   const [savingNew, setSavingNew] = useState(false);
   const [newError, setNewError] = useState("");
 
+  const [tarifa, setTarifa] = useState("");
   const [meetLink, setMeetLink] = useState("");
   const [motivo, setMotivo] = useState("");
   const [saving, setSaving] = useState(false);
@@ -81,15 +82,20 @@ export default function NuevaCitaDialog({
   const isVirtual = ubicaciones.find((u) => u.id === ubicacionId)?.es_virtual ?? false;
   const meetLinkValido = !isVirtual || meetLink.startsWith("https://meet.google.com/");
 
-  // Fetch ubicaciones when doctor changes
+  // Fetch ubicaciones and prefill tarifa when doctor changes
   useEffect(() => {
     if (!doctorId) { setUbicaciones([]); setUbicacionId(""); return; }
     getUbicacionesParaCita(doctorId).then((ubs) => {
       setUbicaciones(ubs);
-      // Pre-select principal consultorio if available
       setUbicacionId(ubs.length > 0 ? ubs[0].id : "");
     });
-  }, [doctorId]);
+    const doc = doctors.find((d) => d.id === doctorId);
+    if (doc?.tarifa_default != null) {
+      setTarifa(String(doc.tarifa_default));
+    } else {
+      setTarifa("");
+    }
+  }, [doctorId, doctors]);
 
   // Limpiar meet link cuando cambia a ubicación no virtual
   useEffect(() => {
@@ -146,6 +152,7 @@ export default function NuevaCitaDialog({
     const [fh, fmin] = hora.split(":").map(Number);
     const inicioISO = bogotaToISO(fy, fm, fd, fh, fmin);
     const finISO = new Date(new Date(inicioISO).getTime() + duracion * 60000).toISOString();
+    const tarifaNum = tarifa.trim() !== "" ? parseFloat(tarifa) : null;
     const result = await createCita({
       doctorId,
       pacienteId: selectedPaciente.id,
@@ -154,6 +161,7 @@ export default function NuevaCitaDialog({
       motivo,
       ubicacionId: ubicacionId === "__principal__" ? null : (ubicacionId || null),
       meetLink: isVirtual ? meetLink : null,
+      tarifa: tarifaNum,
     });
     if (result.error) {
       setError(result.error);
@@ -635,6 +643,24 @@ export default function NuevaCitaDialog({
                     placeholder="Motivo de consulta, observaciones..."
                     rows={3}
                     className="resize-none"
+                  />
+                </div>
+
+                {/* Tarifa */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="tarifa-nueva" className="text-sm">
+                    Tarifa{" "}
+                    <span className="text-muted-foreground font-normal text-xs">(COP, opcional)</span>
+                  </Label>
+                  <Input
+                    id="tarifa-nueva"
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={tarifa}
+                    onChange={(e) => setTarifa(e.target.value)}
+                    placeholder="ej: 150000"
+                    className="text-sm"
                   />
                 </div>
               </div>

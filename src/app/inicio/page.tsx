@@ -210,6 +210,12 @@ export default async function InicioPage() {
               Adelantar
             </Link>
             <Link
+              href="/pagos"
+              className="text-sm text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
+            >
+              Pagos
+            </Link>
+            <Link
               href="/configuracion"
               className="text-sm text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
             >
