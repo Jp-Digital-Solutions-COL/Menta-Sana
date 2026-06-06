@@ -12,6 +12,7 @@ export type CuentaPorCobrar = {
   totalAdeudado: number;
   sesionesCount: number;
   sesionMasAntigua: string;
+  sesionFechas: string[];
 };
 
 export type PagosData = {

@@ -118,17 +118,19 @@ export async function getPagosData(input: {
         totalAdeudado: 0,
         sesionesCount: 0,
         sesionMasAntigua: c.inicio,
+        sesionFechas: [],
       };
     }
     const entry = patientMap[c.paciente_id];
     entry.totalAdeudado += saldo;
     entry.sesionesCount += 1;
+    entry.sesionFechas.push(c.inicio);
     if (c.inicio < entry.sesionMasAntigua) entry.sesionMasAntigua = c.inicio;
   }
 
-  const cuentasPorCobrar = Object.values(patientMap).sort(
-    (a, b) => b.totalAdeudado - a.totalAdeudado
-  );
+  const cuentasPorCobrar = Object.values(patientMap)
+    .map((p) => ({ ...p, sesionFechas: p.sesionFechas.sort((a, b) => b.localeCompare(a)) }))
+    .sort((a, b) => b.totalAdeudado - a.totalAdeudado);
   const totalCCP = cuentasPorCobrar.reduce((s, p) => s + p.totalAdeudado, 0);
 
   return { totalPeriodo, totalMes, totalSemana, totalCCP, porMetodo, cuentasPorCobrar };

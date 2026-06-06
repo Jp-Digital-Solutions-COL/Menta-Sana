@@ -36,17 +36,54 @@ function normalizarTelefono(tel: string | null): string | null {
   return digits || null;
 }
 
-function buildWhatsAppUrl(
-  telefono: string | null,
-  nombre: string,
-  totalAdeudado: number
-): string | null {
-  const tel = normalizarTelefono(telefono);
+function formatFechaSesion(iso: string): string {
+  const fmt = (d: Date) =>
+    new Intl.DateTimeFormat("es-CO", {
+      timeZone: "America/Bogota",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(d);
+  const now = new Date();
+  const ayer = new Date(now);
+  ayer.setDate(now.getDate() - 1);
+  const s = fmt(new Date(iso));
+  if (s === fmt(now)) return "hoy";
+  if (s === fmt(ayer)) return "ayer";
+  return new Intl.DateTimeFormat("es-CO", {
+    day: "numeric",
+    month: "long",
+    timeZone: "America/Bogota",
+  }).format(new Date(iso));
+}
+
+function buildWhatsAppUrl(p: CuentaPorCobrar): string | null {
+  const tel = normalizarTelefono(p.telefono);
   if (!tel) return null;
-  const monto = formatCOP(totalAdeudado);
+  const monto = formatCOP(p.totalAdeudado);
+
+  let sesionText: string;
+  const fechas = (p.sesionFechas.length > 0 ? p.sesionFechas : [p.sesionMasAntigua]).map(
+    formatFechaSesion
+  );
+
+  if (p.sesionesCount === 1) {
+    const f = fechas[0];
+    sesionText =
+      f === "hoy" || f === "ayer"
+        ? `de la sesión de ${f}`
+        : `de la sesión del día ${f}`;
+  } else {
+    const lista =
+      fechas.length === 2
+        ? `${fechas[0]} y ${fechas[1]}`
+        : `${fechas.slice(0, -1).join(", ")} y ${fechas[fechas.length - 1]}`;
+    sesionText = `de las ${p.sesionesCount} sesiones de los días ${lista}`;
+  }
+
   const msg =
-    `Hola ${nombre}, le recordamos cordialmente que tiene un saldo pendiente de ${monto} ` +
-    `por sus sesiones. Por favor contáctenos para coordinar el pago. ¡Muchas gracias!`;
+    `Hola ${p.nombre}, le recordamos cordialmente que tiene un saldo pendiente de ${monto} ` +
+    `${sesionText}. Por favor contáctenos para coordinar el pago. ¡Muchas gracias!`;
   return `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -455,7 +492,7 @@ export default function PagosClient({
                 </thead>
                 <tbody className="divide-y">
                   {data.cuentasPorCobrar.map((p) => {
-                    const waUrl = buildWhatsAppUrl(p.telefono, p.nombre, p.totalAdeudado);
+                    const waUrl = buildWhatsAppUrl(p);
                     return (
                       <tr key={p.pacienteId} className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3 font-medium">{p.nombre}</td>
