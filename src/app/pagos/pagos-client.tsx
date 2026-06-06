@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition } from "react";
 import type { PagosData, DoctorItem, CuentaPorCobrar } from "./types";
-import { getPagosData, savePlantillaWhatsapp } from "./actions";
+import { getPagosData } from "./actions";
+import MensajesWhatsAppDialog from "@/components/mensajes-whatsapp-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LogOut, MessageCircle, TrendingUp, Clock, AlertCircle, DollarSign, Pencil, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { LogOut, MessageCircle, TrendingUp, Clock, AlertCircle, DollarSign, Pencil } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -143,12 +144,6 @@ interface Props {
   onSignOut: () => Promise<void>;
 }
 
-const VARIABLES = [
-  { key: "{nombre}", label: "Nombre del paciente" },
-  { key: "{monto}", label: "Monto adeudado" },
-  { key: "{sesiones}", label: "Detalle de sesiones" },
-] as const;
-
 export default function PagosClient({
   initialData,
   initialDesde,
@@ -170,35 +165,7 @@ export default function PagosClient({
 
   // Plantilla de mensaje
   const [plantilla, setPlantilla] = useState(initialPlantilla);
-  const [editandoPlantilla, setEditandoPlantilla] = useState(false);
-  const [savingPlantilla, setSavingPlantilla] = useState(false);
-  const [plantillaSaved, setPlantillaSaved] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  function insertarVariable(variable: string) {
-    const el = textareaRef.current;
-    if (!el) {
-      setPlantilla((prev) => prev + variable);
-      return;
-    }
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const next = plantilla.slice(0, start) + variable + plantilla.slice(end);
-    setPlantilla(next);
-    requestAnimationFrame(() => {
-      el.selectionStart = start + variable.length;
-      el.selectionEnd = start + variable.length;
-      el.focus();
-    });
-  }
-
-  async function handleGuardarPlantilla() {
-    setSavingPlantilla(true);
-    await savePlantillaWhatsapp(plantilla);
-    setSavingPlantilla(false);
-    setPlantillaSaved(true);
-    setTimeout(() => setPlantillaSaved(false), 2500);
-  }
+  const [mensajesDialogOpen, setMensajesDialogOpen] = useState(false);
 
   function fetchData(desde: string, hasta: string, doctorSel: string) {
     startTransition(async () => {
@@ -500,88 +467,23 @@ export default function PagosClient({
           </Card>
         )}
 
-        {/* ── Plantilla de mensaje WhatsApp ────────────────────── */}
-        <div className="rounded-md border bg-background">
+        {/* ── Personalizar mensajes WhatsApp ───────────────────── */}
+        <div className="flex justify-end">
           <button
-            onClick={() => setEditandoPlantilla((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/40 transition-colors rounded-md"
+            onClick={() => setMensajesDialogOpen(true)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <span className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4 text-green-600" />
-              Mensaje de cobro por WhatsApp
-            </span>
-            {editandoPlantilla ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
+            <Pencil className="h-3.5 w-3.5" />
+            Personalizar mensajes de WhatsApp
           </button>
-
-          {editandoPlantilla && (
-            <div className="px-4 pb-4 space-y-3 border-t pt-3">
-              {/* Botones de variables */}
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Haz clic en una variable para insertarla donde está el cursor:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {VARIABLES.map((v) => (
-                    <button
-                      key={v.key}
-                      onClick={() => insertarVariable(v.key)}
-                      title={v.label}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 text-xs font-mono hover:bg-teal-100 transition-colors"
-                    >
-                      + {v.key}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Textarea */}
-              <textarea
-                ref={textareaRef}
-                value={plantilla}
-                onChange={(e) => setPlantilla(e.target.value)}
-                rows={4}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-
-              {/* Vista previa */}
-              <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Vista previa: </span>
-                {plantilla
-                  .replace(/\{nombre\}/g, "Juan Pérez")
-                  .replace(/\{monto\}/g, "$80.000")
-                  .replace(/\{sesiones\}/g, "de la sesión de ayer")}
-              </div>
-
-              {/* Guardar */}
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleGuardarPlantilla}
-                  disabled={savingPlantilla}
-                  size="sm"
-                  className="bg-teal-600 hover:bg-teal-700 text-white"
-                >
-                  {savingPlantilla ? "Guardando…" : "Guardar mensaje"}
-                </Button>
-                {plantillaSaved && (
-                  <span className="flex items-center gap-1 text-sm text-emerald-600">
-                    <Check className="h-4 w-4" />
-                    Guardado
-                  </span>
-                )}
-                <button
-                  onClick={() => setEditandoPlantilla(false)}
-                  className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          )}
         </div>
+
+        <MensajesWhatsAppDialog
+          open={mensajesDialogOpen}
+          onClose={() => setMensajesDialogOpen(false)}
+          defaultTab="cobro"
+          onSaveCobro={(p) => setPlantilla(p)}
+        />
 
         {/* ── Cuentas por cobrar ───────────────────────────────── */}
         <div>

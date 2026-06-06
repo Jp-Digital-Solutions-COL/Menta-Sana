@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { updateEstado, reagendar, deleteCita, getHorasDisponibles, sendConfirmacionEmail, getUbicacionParaCita, updateCitaTarifa, getPagos, createPago, updatePago, deletePago } from "./actions";
-import { getPlantillaRecordatorio, savePlantillaRecordatorio } from "@/app/configuracion/actions";
+import { getPlantillaRecordatorio } from "@/app/configuracion/actions";
+import MensajesWhatsAppDialog from "@/components/mensajes-whatsapp-dialog";
 import { DEFAULT_PLANTILLA_RECORDATORIO } from "@/app/configuracion/constants";
 import type { CitaConRel, EstadoCita, MetodoPago, Pago } from "./types";
 import { ESTADO_CONFIG, METODOS_PAGO } from "./types";
@@ -33,7 +34,6 @@ import {
   Video,
   Trash2,
   ChevronDown,
-  ChevronUp,
   ExternalLink,
   DollarSign,
   Pencil,
@@ -57,13 +57,6 @@ function normalizarTelefono(tel: string): string {
   return digits.startsWith("57") ? digits : "57" + digits;
 }
 
-const VARS_RECORDATORIO = [
-  { key: "{paciente}", label: "Nombre del paciente" },
-  { key: "{doctor}",   label: "Título + nombre del especialista" },
-  { key: "{fecha}",    label: "Fecha de la cita" },
-  { key: "{hora}",     label: "Hora de la cita" },
-] as const;
-
 function urlRecordatorio(
   tel: string,
   paciente: string,
@@ -72,20 +65,27 @@ function urlRecordatorio(
   fecha: string,
   hora: string,
   plantilla: string,
-  lugar?: { nombre: string | null; direccion: string | null } | null,
+  ubicacion?: { nombre: string | null; direccion: string | null; mapsUrl: string | null } | null,
   meetLink?: string | null,
 ) {
   const prefijo = titulo ?? "Dr.";
+  const hasConditional = /\{lugar\}|\{direccion\}|\{maps\}|\{meet\}/.test(plantilla);
   let msg = plantilla
     .replace(/\{paciente\}/g, paciente)
     .replace(/\{doctor\}/g, `${prefijo} ${doctor}`)
     .replace(/\{fecha\}/g, fecha)
-    .replace(/\{hora\}/g, hora);
-  if (meetLink) {
-    msg += `\n\nCita virtual\nLink de la videollamada: ${meetLink}`;
-  } else {
-    if (lugar?.nombre) msg += `\n\nLugar: ${lugar.nombre}`;
-    if (lugar?.direccion) msg += `\nDirección: ${lugar.direccion}`;
+    .replace(/\{hora\}/g, hora)
+    .replace(/\{lugar\}/g, ubicacion?.nombre ?? "")
+    .replace(/\{direccion\}/g, ubicacion?.direccion ?? "")
+    .replace(/\{maps\}/g, ubicacion?.mapsUrl ?? "")
+    .replace(/\{meet\}/g, meetLink ?? "");
+  if (!hasConditional) {
+    if (meetLink) {
+      msg += `\n\nCita virtual\nLink de la videollamada: ${meetLink}`;
+    } else {
+      if (ubicacion?.nombre) msg += `\n\nLugar: ${ubicacion.nombre}`;
+      if (ubicacion?.direccion) msg += `\nDirección: ${ubicacion.direccion}`;
+    }
   }
   return `https://wa.me/${normalizarTelefono(tel)}?text=${encodeURIComponent(msg)}`;
 }
@@ -128,10 +128,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
 
   // Plantilla de recordatorio
   const [plantillaRec, setPlantillaRec] = useState(DEFAULT_PLANTILLA_RECORDATORIO);
-  const [editandoPlantilla, setEditandoPlantilla] = useState(false);
-  const [savingPlantilla, setSavingPlantilla] = useState(false);
-  const [plantillaSaved, setPlantillaSaved] = useState(false);
-  const plantillaRef = useRef<HTMLTextAreaElement>(null);
+  const [mensajesDialogOpen, setMensajesDialogOpen] = useState(false);
 
   // Tarifa inline edit
   const [editingTarifa, setEditingTarifa] = useState(false);
@@ -169,7 +166,6 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
     setUbicacionWA(null);
     getUbicacionParaCita(cita.doctores.id, cita.id).then(setUbicacionWA);
     getPlantillaRecordatorio().then(setPlantillaRec);
-    setEditandoPlantilla(false);
     // Tarifa
     setEditingTarifa(false);
     setTarifaInput(cita.tarifa != null ? String(cita.tarifa) : "");
@@ -264,28 +260,6 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
     setPagoError("");
   }
 
-  function insertarVarPlantilla(variable: string) {
-    const el = plantillaRef.current;
-    if (!el) { setPlantillaRec((p) => p + variable); return; }
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const next = plantillaRec.slice(0, start) + variable + plantillaRec.slice(end);
-    setPlantillaRec(next);
-    requestAnimationFrame(() => {
-      el.selectionStart = start + variable.length;
-      el.selectionEnd = start + variable.length;
-      el.focus();
-    });
-  }
-
-  async function handleGuardarPlantilla() {
-    setSavingPlantilla(true);
-    await savePlantillaRecordatorio(plantillaRec);
-    setSavingPlantilla(false);
-    setPlantillaSaved(true);
-    setTimeout(() => setPlantillaSaved(false), 2500);
-  }
-
   async function handleSavePago() {
     if (!cita || !pagoMonto.trim()) return;
     const monto = parseFloat(pagoMonto);
@@ -354,6 +328,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
   }
 
   return (
+    <>
     <Sheet open={!!cita} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden">
 
@@ -526,87 +501,14 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
                         </a>
                       </div>
 
-                      {/* Editor de plantilla de recordatorio */}
+                      {/* Botón personalizar mensajes */}
                       <button
-                        onClick={() => setEditandoPlantilla((v) => !v)}
+                        onClick={() => setMensajesDialogOpen(true)}
                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors w-full justify-end pt-0.5"
                       >
                         <Pencil className="h-3 w-3" />
-                        Personalizar mensaje
-                        {editandoPlantilla
-                          ? <ChevronUp className="h-3 w-3" />
-                          : <ChevronDown className="h-3 w-3" />}
+                        Personalizar mensajes
                       </button>
-
-                      {editandoPlantilla && (
-                        <div className="rounded-md border bg-muted/30 p-3 space-y-2.5">
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1.5">
-                              Insertar variable en la posición del cursor:
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {VARS_RECORDATORIO.map((v) => (
-                                <button
-                                  key={v.key}
-                                  onClick={() => insertarVarPlantilla(v.key)}
-                                  title={v.label}
-                                  className="px-2 py-0.5 rounded-full border border-teal-300 bg-teal-50 text-teal-700 text-xs font-mono hover:bg-teal-100 transition-colors"
-                                >
-                                  + {v.key}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <textarea
-                            ref={plantillaRef}
-                            value={plantillaRec}
-                            onChange={(e) => setPlantillaRec(e.target.value)}
-                            rows={3}
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-teal-500"
-                          />
-
-                          <div className="rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground whitespace-pre-wrap">
-                            <span className="font-medium text-foreground">Vista previa:{"\n"}</span>
-                            {(() => {
-                              let preview = plantillaRec
-                                .replace(/\{paciente\}/g, cita.pacientes?.nombre ?? "Paciente")
-                                .replace(/\{doctor\}/g, `${cita.doctores.titulo ?? "Dr."} ${cita.doctores.nombre}`)
-                                .replace(/\{fecha\}/g, dateLabel)
-                                .replace(/\{hora\}/g, formatTime(dt));
-                              if (cita.meet_link) {
-                                preview += `\n\nCita virtual\nLink de la videollamada: ${cita.meet_link}`;
-                              } else if (ubicacionWA?.nombre || ubicacionWA?.direccion) {
-                                if (ubicacionWA.nombre) preview += `\n\nLugar: ${ubicacionWA.nombre}`;
-                                if (ubicacionWA.direccion) preview += `\nDirección: ${ubicacionWA.direccion}`;
-                              }
-                              return preview;
-                            })()}
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              onClick={handleGuardarPlantilla}
-                              disabled={savingPlantilla}
-                              className="bg-teal-600 hover:bg-teal-700 text-white h-7 text-xs"
-                            >
-                              {savingPlantilla ? "Guardando…" : "Guardar"}
-                            </Button>
-                            {plantillaSaved && (
-                              <span className="flex items-center gap-1 text-xs text-emerald-600">
-                                <Check className="h-3.5 w-3.5" /> Guardado
-                              </span>
-                            )}
-                            <button
-                              onClick={() => setEditandoPlantilla(false)}
-                              className="ml-auto text-xs text-muted-foreground hover:text-foreground"
-                            >
-                              Cerrar
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                   {cita.pacientes?.email && (
@@ -977,5 +879,21 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
         </div>
       </SheetContent>
     </Sheet>
+    <MensajesWhatsAppDialog
+      open={mensajesDialogOpen}
+      onClose={() => setMensajesDialogOpen(false)}
+      defaultTab="recordatorio"
+      previewRecData={{
+        paciente: cita.pacientes?.nombre ?? "Paciente",
+        titulo: cita.doctores.titulo ?? null,
+        doctor: cita.doctores.nombre,
+        fecha: dateLabel,
+        hora: formatTime(dt),
+        ubicacion: ubicacionWA,
+        meetLink: cita.meet_link ?? null,
+      }}
+      onSaveRecordatorio={(p) => setPlantillaRec(p)}
+    />
+    </>
   );
 }
