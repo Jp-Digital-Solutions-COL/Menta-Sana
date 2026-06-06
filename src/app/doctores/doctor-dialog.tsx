@@ -115,7 +115,7 @@ export default function DoctorDialog({ open, onClose, doctor }: Props) {
       setUploading(false);
     }
 
-    const tarifaNum = tarifa.trim() !== "" ? parseInt(tarifa, 10) : null;
+    const tarifaNum = tarifa.trim() !== "" ? parseFloat(tarifa) : null;
     const result = doctor
       ? await updateDoctor(doctor.id, nombre, especialidad, fotoUrl, titulo, tarifaNum)
       : await createDoctor(nombre, especialidad, fotoUrl, titulo, tarifaNum);
@@ -292,7 +292,7 @@ export default function DoctorDialog({ open, onClose, doctor }: Props) {
                 id="tarifa"
                 type="number"
                 min={0}
-                step={1000}
+                step="any"
                 value={tarifa}
                 onChange={(e) => setTarifa(e.target.value)}
                 placeholder="ej: 150000"
