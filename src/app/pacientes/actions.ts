@@ -99,7 +99,7 @@ export async function getResumenPagosPaciente(
   }
 
   return citas.map((c) => {
-    const doc = c.doctores as { nombre: string; titulo: string | null } | null;
+    const doc = c.doctores as unknown as { nombre: string; titulo: string | null } | null;
     const totalPagado = pagosMap[c.id] ?? 0;
     const tarifa = c.tarifa != null ? Number(c.tarifa) : null;
     const saldo = tarifa != null ? tarifa - totalPagado : null;
