@@ -19,6 +19,7 @@ import {
   createCuentaDoctor,
   resetPasswordForUser,
   resetPasswordForDoctor,
+  updatePasswordForDoctor,
   type SecretariaGlobal,
   type DoctorAdmin,
   type DoctorItem,
@@ -770,6 +771,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
   const [editDocPendingBlob, setEditDocPendingBlob] = useState<Blob | null>(null);
   const [editDocPreviewUrl, setEditDocPreviewUrl] = useState<string | null>(null);
   const [editDocRemovePhoto, setEditDocRemovePhoto] = useState(false);
+  const [editDocPassword, setEditDocPassword] = useState("");
   const [editDocLoading, setEditDocLoading] = useState(false);
   const [editDocUploading, setEditDocUploading] = useState(false);
   const [editDocError, setEditDocError] = useState("");
@@ -933,6 +935,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
     if (editDocPreviewUrl) URL.revokeObjectURL(editDocPreviewUrl);
     setEditDocPreviewUrl(null);
     setEditDocRemovePhoto(false);
+    setEditDocPassword("");
     setEditDocError("");
     setFormOpen(false);
   }
@@ -942,6 +945,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
     setEditingDocId(null);
     setEditDocPreviewUrl(null);
     setEditDocPendingBlob(null);
+    setEditDocPassword("");
     setEditDocError("");
   }
 
@@ -995,9 +999,14 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
       especialidad: editDocEsp.trim() || null,
       foto_url,
     });
-    setEditDocLoading(false);
-    if (r.error) { setEditDocError(r.error); return; }
+    if (r.error) { setEditDocLoading(false); setEditDocError(r.error); return; }
 
+    if (editDocPassword) {
+      const rp = await updatePasswordForDoctor(editingDocId, editDocPassword);
+      if (rp.error) { setEditDocLoading(false); setEditDocError(rp.error); return; }
+    }
+
+    setEditDocLoading(false);
     const finalUrl = foto_url !== undefined ? foto_url : editDocCurrentUrl;
     setDoctors((prev) =>
       prev.map((d) =>
@@ -1010,6 +1019,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
     setEditingDocId(null);
     setEditDocPreviewUrl(null);
     setEditDocPendingBlob(null);
+    setEditDocPassword("");
   }
 
   return (
@@ -1263,6 +1273,19 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
                                 disabled={editDocLoading}
                               />
                             </div>
+                            {doctoresConAcceso.includes(editingDocId ?? "") && (
+                              <div className="space-y-1 col-span-2">
+                                <Label className="text-xs">Nueva contraseña (opcional)</Label>
+                                <PasswordInput
+                                  minLength={6}
+                                  placeholder="Dejar vacío para no cambiar"
+                                  value={editDocPassword}
+                                  onChange={(e) => setEditDocPassword(e.target.value)}
+                                  className="h-7 text-xs"
+                                  disabled={editDocLoading}
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

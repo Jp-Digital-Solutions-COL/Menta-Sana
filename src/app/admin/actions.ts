@@ -556,6 +556,27 @@ export async function resetPasswordForDoctor(
   return {};
 }
 
+export async function updatePasswordForDoctor(
+  doctorId: string,
+  password: string
+): Promise<{ error?: string }> {
+  await assertSuperadmin();
+  const admin = createAdminClient();
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("doctor_id", doctorId)
+    .eq("rol", "doctor")
+    .single();
+
+  if (!profile) return { error: "Este especialista no tiene cuenta de acceso." };
+
+  const { error } = await admin.auth.admin.updateUserById(profile.id, { password });
+  if (error) return { error: error.message };
+  return {};
+}
+
 export async function toggleAsignacion(
   secretariaId: string,
   doctorId: string,
