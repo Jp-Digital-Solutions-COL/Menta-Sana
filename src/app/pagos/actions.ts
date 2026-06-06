@@ -4,9 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { toDateStr, startOfWeek, endOfWeek, todayBogota } from "@/app/agenda/utils";
 import type { CuentaPorCobrar, DoctorItem, MetodoItem, PagosData } from "./types";
-
-export const DEFAULT_PLANTILLA =
-  "Hola {nombre}, le recordamos cordialmente que tiene un saldo pendiente de {monto} {sesiones}. Por favor contáctenos para coordinar el pago. ¡Muchas gracias!";
+import { DEFAULT_PLANTILLA } from "./types";
 
 const METODO_LABELS: Record<string, string> = {
   efectivo: "Efectivo",

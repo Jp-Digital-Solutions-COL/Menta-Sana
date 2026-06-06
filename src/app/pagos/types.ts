@@ -1,3 +1,6 @@
+export const DEFAULT_PLANTILLA =
+  "Hola {nombre}, le recordamos cordialmente que tiene un saldo pendiente de {monto} {sesiones}. Por favor contáctenos para coordinar el pago. ¡Muchas gracias!";
+
 export type MetodoItem = {
   metodo: string;
   label: string;
