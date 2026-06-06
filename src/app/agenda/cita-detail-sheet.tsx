@@ -566,13 +566,22 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-teal-500"
                           />
 
-                          <div className="rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">Vista previa: </span>
-                            {plantillaRec
-                              .replace(/\{paciente\}/g, cita.pacientes?.nombre ?? "Paciente")
-                              .replace(/\{doctor\}/g, `${cita.doctores.titulo ?? "Dr."} ${cita.doctores.nombre}`)
-                              .replace(/\{fecha\}/g, dateLabel)
-                              .replace(/\{hora\}/g, formatTime(dt))}
+                          <div className="rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground whitespace-pre-wrap">
+                            <span className="font-medium text-foreground">Vista previa:{"\n"}</span>
+                            {(() => {
+                              let preview = plantillaRec
+                                .replace(/\{paciente\}/g, cita.pacientes?.nombre ?? "Paciente")
+                                .replace(/\{doctor\}/g, `${cita.doctores.titulo ?? "Dr."} ${cita.doctores.nombre}`)
+                                .replace(/\{fecha\}/g, dateLabel)
+                                .replace(/\{hora\}/g, formatTime(dt));
+                              if (cita.meet_link) {
+                                preview += `\n\nCita virtual\nLink de la videollamada: ${cita.meet_link}`;
+                              } else if (ubicacionWA?.nombre || ubicacionWA?.direccion) {
+                                if (ubicacionWA.nombre) preview += `\n\nLugar: ${ubicacionWA.nombre}`;
+                                if (ubicacionWA.direccion) preview += `\nDirección: ${ubicacionWA.direccion}`;
+                              }
+                              return preview;
+                            })()}
                           </div>
 
                           <div className="flex items-center gap-2">
