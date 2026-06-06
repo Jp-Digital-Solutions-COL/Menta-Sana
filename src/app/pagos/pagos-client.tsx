@@ -123,21 +123,24 @@ export default function PagosClient({
     });
   }
 
-  function handlePeriodoChange(value: Periodo) {
-    setPeriodo(value);
-    if (value !== "custom") {
-      const range = value === "mes" ? getMonthRange() : getWeekRange();
+  function handlePeriodoChange(value: string | null) {
+    if (!value) return;
+    const p = value as Periodo;
+    setPeriodo(p);
+    if (p !== "custom") {
+      const range = p === "mes" ? getMonthRange() : getWeekRange();
       fetchData(range.desde, range.hasta, selectedDoctor);
     }
   }
 
-  function handleDoctorChange(value: string) {
-    setSelectedDoctor(value);
+  function handleDoctorChange(value: string | null) {
+    const v = value ?? "all";
+    setSelectedDoctor(v);
     const range = periodo === "mes" ? getMonthRange() : periodo === "semana" ? getWeekRange() : null;
     if (range) {
-      fetchData(range.desde, range.hasta, value);
+      fetchData(range.desde, range.hasta, v);
     } else {
-      fetchData(customDesde, customHasta, value);
+      fetchData(customDesde, customHasta, v);
     }
   }
 
