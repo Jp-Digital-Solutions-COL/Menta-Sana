@@ -86,7 +86,7 @@ export default function DoctoresClient({ doctores: initial, rol }: Props) {
       {/* Encabezado */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Doctores</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Especialistas</h1>
           {!esSecretaria && (
             <p className="text-sm text-muted-foreground mt-1">
               Los doctores{" "}

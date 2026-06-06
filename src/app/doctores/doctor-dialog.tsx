@@ -163,7 +163,7 @@ export default function DoctorDialog({ open, onClose, doctor }: Props) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogTitle>{doctor ? "Editar doctor" : "Agregar doctor"}</DialogTitle>
+          <DialogTitle>{doctor ? "Editar especialista" : "Agregar especialista"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
@@ -422,7 +422,7 @@ export default function DoctorDialog({ open, onClose, doctor }: Props) {
               ) : doctor ? (
                 "Guardar cambios"
               ) : (
-                "Agregar doctor"
+                "Agregar especialista"
               )}
             </Button>
           </DialogFooter>

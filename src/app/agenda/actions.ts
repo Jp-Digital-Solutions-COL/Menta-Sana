@@ -236,7 +236,7 @@ export async function createCita(input: {
     .gt("fin", input.inicioISO)
     .maybeSingle();
 
-  if (overlap) return { error: "Ya existe una cita en ese horario para este doctor." };
+  if (overlap) return { error: "Ya existe una cita en ese horario para este especialista." };
 
   // Validar meet_link si la ubicación es virtual
   let meetLinkFinal: string | null = null;
@@ -390,7 +390,7 @@ export async function reagendar(
       .gt("fin", inicioISO)
       .maybeSingle();
 
-    if (overlap) return { error: "Ya existe una cita en ese horario para este doctor." };
+    if (overlap) return { error: "Ya existe una cita en ese horario para este especialista." };
   }
 
   const { error } = await supabase

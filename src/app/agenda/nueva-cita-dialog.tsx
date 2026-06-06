@@ -216,7 +216,7 @@ export default function NuevaCitaDialog({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-sm">
-                      Doctor <span className="text-destructive">*</span>
+                      Especialista <span className="text-destructive">*</span>
                     </Label>
                     <Select value={doctorId} onValueChange={(v) => v && setDoctorId(v)}>
                       <SelectTrigger>

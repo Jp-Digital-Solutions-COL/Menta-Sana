@@ -365,12 +365,12 @@ export default function AgendaClient({
             <SelectTrigger className="w-[180px] h-8 text-xs">
               <span data-slot="select-value" className="flex flex-1 text-left truncate">
                 {selectedDoctorId === "todos"
-                  ? "Todos los doctores"
-                  : (activeDoctors.find((d) => d.id === selectedDoctorId)?.nombre ?? "Todos los doctores")}
+                  ? "Todos los especialistas"
+                  : (activeDoctors.find((d) => d.id === selectedDoctorId)?.nombre ?? "Todos los especialistas")}
               </span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="todos">Todos los doctores</SelectItem>
+              <SelectItem value="todos">Todos los especialistas</SelectItem>
               {activeDoctors.map((d) => (
                 <SelectItem key={d.id} value={d.id}>
                   {d.nombre}

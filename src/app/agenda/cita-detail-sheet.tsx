@@ -391,7 +391,7 @@ export default function CitaDetailSheet({ cita, onClose, onUpdate }: Props) {
                   {/* Doctor y paciente (read-only) */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Doctor</Label>
+                      <Label className="text-xs text-muted-foreground">Especialista</Label>
                       <p className="text-sm font-medium truncate">{cita.doctores.nombre}</p>
                     </div>
                     {cita.pacientes && (

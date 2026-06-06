@@ -1043,7 +1043,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
               onClick={() => { setFormOpen((v) => !v); setDocError(""); }}
             >
               {formOpen ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-              {formOpen ? "Cancelar" : "Nuevo doctor"}
+              {formOpen ? "Cancelar" : "Nuevo especialista"}
             </Button>
           </div>
 
@@ -1158,7 +1158,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
                 ) : docLoading ? (
                   "Guardando..."
                 ) : (
-                  "Crear doctor"
+                  "Crear especialista"
                 )}
               </Button>
             </form>
@@ -1177,11 +1177,11 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
           {loadingDoctors ? (
             <div className="flex items-center justify-center py-10 text-muted-foreground gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Cargando doctores...</span>
+              <span className="text-sm">Cargando especialistas...</span>
             </div>
           ) : doctors.length === 0 ? (
             <p className="text-xs text-muted-foreground py-4 text-center">
-              No hay doctores. Crea el primero.
+              No hay especialistas. Crea el primero.
             </p>
           ) : (
             <div className="space-y-2">
@@ -1346,7 +1346,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
                     ) : (
                       <button
                         type="button"
-                        title="Dar acceso al doctor"
+                        title="Dar acceso al especialista"
                         onClick={() => {
                           setAccesoDocId(mostrandoAcceso ? null : doc.id);
                           setAccesoEmail("");
@@ -1391,7 +1391,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
                     {/* Edit button */}
                     <button
                       type="button"
-                      title="Editar doctor"
+                      title="Editar especialista"
                       onClick={() => handleStartEdit(doc)}
                       className="h-7 w-7 flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
                     >
@@ -1444,7 +1444,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
                             type="email"
                             required
                             autoFocus
-                            placeholder="doctor@ejemplo.com"
+                            placeholder="especialista@ejemplo.com"
                             value={accesoEmail}
                             onChange={(e) => setAccesoEmail(e.target.value)}
                             className="h-7 text-xs"
@@ -1503,7 +1503,7 @@ export default function TeamManager({ consultorios }: Props) {
       <CollapsibleSection title="Secretarias">
         <SecretariasTab consultorios={consultorios} />
       </CollapsibleSection>
-      <CollapsibleSection title="Doctores">
+      <CollapsibleSection title="Especialistas">
         <DoctoresTab consultorios={consultorios} />
       </CollapsibleSection>
     </div>

@@ -48,7 +48,7 @@ export async function createDoctor(
     activo: true,
   });
 
-  if (error) return { error: "No se pudo crear el doctor." };
+  if (error) return { error: "No se pudo crear el especialista." };
   revalidatePath("/doctores");
   return {};
 }
@@ -66,7 +66,7 @@ export async function updateDoctor(
     .update({ nombre: nombre.trim(), titulo: titulo || null, especialidad: especialidad.trim() || null, foto_url })
     .eq("id", id);
 
-  if (error) return { error: "No se pudo actualizar el doctor." };
+  if (error) return { error: "No se pudo actualizar el especialista." };
   revalidatePath("/doctores");
   return {};
 }

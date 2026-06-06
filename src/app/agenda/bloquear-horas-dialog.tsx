@@ -110,7 +110,7 @@ export default function BloquearHorasDialog({
           {/* Doctor */}
           <div className="space-y-1.5">
             <Label className="text-sm">
-              Doctor <span className="text-destructive">*</span>
+              Especialista <span className="text-destructive">*</span>
             </Label>
             <Select value={doctorId} onValueChange={(v) => v && setDoctorId(v)}>
               <SelectTrigger>

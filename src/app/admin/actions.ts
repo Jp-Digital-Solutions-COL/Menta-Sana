@@ -293,7 +293,7 @@ export async function createDoctor(
     .select("id")
     .single();
 
-  if (error) return { error: `No se pudo crear el doctor: ${error.message}` };
+  if (error) return { error: `No se pudo crear el especialista: ${error.message}` };
 
   // Auto-assign to every secretaria in this consultorio
   const { data: secretarias } = await admin
@@ -335,7 +335,7 @@ export async function createDoctorAdmin(
     .select("id")
     .single();
 
-  if (error) return { error: `No se pudo crear el doctor: ${error.message}` };
+  if (error) return { error: `No se pudo crear el especialista: ${error.message}` };
 
   // Auto-assign to every secretaria in this consultorio
   const { data: secretarias } = await admin
@@ -544,11 +544,11 @@ export async function resetPasswordForDoctor(
     .eq("rol", "doctor")
     .single();
 
-  if (!profile) return { error: "Este doctor no tiene cuenta de acceso." };
+  if (!profile) return { error: "Este especialista no tiene cuenta de acceso." };
 
   const { data: userData } = await admin.auth.admin.getUserById(profile.id);
   const email = userData?.user?.email;
-  if (!email) return { error: "No se encontró el correo del doctor." };
+  if (!email) return { error: "No se encontró el correo del especialista." };
 
   const redirectTo = `${getAppUrl()}/restablecer-contrasena`;
   const { error } = await admin.auth.resetPasswordForEmail(email, { redirectTo });

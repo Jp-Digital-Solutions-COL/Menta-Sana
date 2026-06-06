@@ -64,7 +64,7 @@ export default async function ConfiguracionPage() {
               href="/doctores"
               className="text-sm text-muted-foreground hover:text-foreground px-3 py-1 rounded-md hover:bg-muted transition-colors"
             >
-              Doctores
+              Especialistas
             </Link>
             <Link
               href="/adelantar"

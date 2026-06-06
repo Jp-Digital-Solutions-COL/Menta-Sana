@@ -87,7 +87,7 @@ export async function GET(request: Request) {
     const { error: emailError } = await sendConfirmacionCita({
       to: paciente.email,
       paciente: paciente.nombre,
-      doctor: doctor?.nombre ?? "tu doctor",
+      doctor: doctor?.nombre ?? "tu especialista",
       especialidad: doctor?.especialidad ?? null,
       fotoUrl: doctor?.foto_url ?? null,
       fecha: formatFecha(cita.inicio),

@@ -189,8 +189,8 @@ export default function AdelatarClient({ doctors }: Props) {
     const doctorLabel = doctorSeleccionado
       ? doctorSeleccionado.titulo
         ? `${doctorSeleccionado.titulo} ${doctorSeleccionado.nombre}`
-        : `el/la doctor(a) ${doctorSeleccionado.nombre}`
-      : "el doctor";
+        : `el/la especialista ${doctorSeleccionado.nombre}`
+      : "el especialista";
 
     // Fecha del espacio liberado
     const hoyStr = fechaBogota(new Date().toISOString());
@@ -220,7 +220,7 @@ export default function AdelatarClient({ doctors }: Props) {
   if (doctors.length === 0) {
     return (
       <div className="text-center py-16 text-muted-foreground text-sm">
-        No tienes doctores asignados.
+        No tienes especialistas asignados.
       </div>
     );
   }
@@ -239,11 +239,11 @@ export default function AdelatarClient({ doctors }: Props) {
           {/* Doctor */}
           <div className="space-y-2">
             <Label>
-              Doctor <span className="text-destructive">*</span>
+              Especialista <span className="text-destructive">*</span>
             </Label>
             <Select value={doctorId} onValueChange={(v) => v && setDoctorId(v)}>
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar doctor" />
+                <SelectValue placeholder="Seleccionar especialista" />
               </SelectTrigger>
               <SelectContent>
                 {doctors.map((d) => (
