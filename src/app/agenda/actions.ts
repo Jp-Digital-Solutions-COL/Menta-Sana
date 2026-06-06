@@ -163,14 +163,21 @@ export async function getHorasDisponibles(
 export async function getUbicacionesParaCita(doctorId: string): Promise<UbicacionBasic[]> {
   const supabase = await createClient();
 
-  const [{ data: { user } }, { data: extras }] = await Promise.all([
+  const [{ data: { user } }, { data: extras }, { data: doctorData }] = await Promise.all([
     supabase.auth.getUser(),
     supabase
       .from("ubicaciones_doctor")
       .select("id, nombre, direccion, telefono, maps_url, es_virtual")
       .eq("doctor_id", doctorId)
       .order("created_at"),
+    supabase
+      .from("doctores")
+      .select("consultorio_virtual")
+      .eq("id", doctorId)
+      .single(),
   ]);
+
+  const principalEsVirtual = (doctorData as { consultorio_virtual?: boolean } | null)?.consultorio_virtual ?? false;
 
   let principal: UbicacionBasic | null = null;
   if (user) {
@@ -189,10 +196,10 @@ export async function getUbicacionesParaCita(doctorId: string): Promise<Ubicacio
         principal = {
           id: "__principal__",
           nombre: (consult.nombre as string | null) ?? "Consultorio principal",
-          direccion: consult.direccion as string | null,
+          direccion: principalEsVirtual ? null : (consult.direccion as string | null),
           telefono: consult.telefono_contacto as string | null,
-          maps_url: consult.maps_url as string | null,
-          es_virtual: false,
+          maps_url: principalEsVirtual ? null : (consult.maps_url as string | null),
+          es_virtual: principalEsVirtual,
         };
       }
     }
@@ -247,6 +254,20 @@ export async function createCita(input: {
       .eq("id", input.ubicacionId)
       .single();
     if (ub?.es_virtual) {
+      const ml = input.meetLink?.trim() ?? "";
+      if (!ml.startsWith(MEET_PREFIX)) {
+        return { error: "Para citas virtuales se requiere un link válido de Google Meet (https://meet.google.com/...)." };
+      }
+      meetLinkFinal = ml;
+    }
+  } else {
+    // Consultorio principal — verificar si el doctor atiende solo virtual
+    const { data: doctorRow } = await supabase
+      .from("doctores")
+      .select("consultorio_virtual")
+      .eq("id", input.doctorId)
+      .single();
+    if ((doctorRow as { consultorio_virtual?: boolean } | null)?.consultorio_virtual) {
       const ml = input.meetLink?.trim() ?? "";
       if (!ml.startsWith(MEET_PREFIX)) {
         return { error: "Para citas virtuales se requiere un link válido de Google Meet (https://meet.google.com/...)." };

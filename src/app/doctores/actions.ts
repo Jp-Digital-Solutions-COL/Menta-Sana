@@ -170,6 +170,20 @@ export async function createUbicacion(
   return { data: data as Ubicacion };
 }
 
+export async function setDoctorConsultorioVirtual(
+  id: string,
+  virtual: boolean
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("doctores")
+    .update({ consultorio_virtual: virtual })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/doctores");
+  return {};
+}
+
 export async function deleteUbicacion(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase

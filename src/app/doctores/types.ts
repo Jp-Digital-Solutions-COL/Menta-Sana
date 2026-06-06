@@ -6,6 +6,7 @@ export type Doctor = {
   especialidad: string | null;
   foto_url: string | null;
   activo: boolean;
+  consultorio_virtual: boolean;
   created_at: string;
 };
 
