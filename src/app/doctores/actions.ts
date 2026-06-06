@@ -181,6 +181,7 @@ export async function setDoctorConsultorioVirtual(
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/doctores");
+  revalidatePath("/especialista");
   return {};
 }
 

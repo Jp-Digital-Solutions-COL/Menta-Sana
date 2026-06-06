@@ -51,7 +51,7 @@ export default function DoctorConfig({ doctorId, doctorNombre, consultorioVirtua
         </Button>
         <Button variant="outline" className="gap-2" onClick={() => setSedesOpen(true)}>
           <MapPin className="h-4 w-4" />
-          Consultorio extra
+          Mis sedes
         </Button>
         <Button variant="outline" className="gap-2" onClick={() => setConsultorioOpen(true)}>
           <Building2 className="h-4 w-4" />
