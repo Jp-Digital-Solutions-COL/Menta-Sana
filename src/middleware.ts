@@ -65,10 +65,10 @@ export async function middleware(request: NextRequest) {
     }
 
     const isDoctorRoute =
-      pathname === "/especialista" ||
-      pathname.startsWith("/especialista/") ||
-      pathname === "/pagos";
-    if (isDoctor && !isDoctorRoute) {
+      pathname === "/especialista" || pathname.startsWith("/especialista/");
+    const isSharedRoute = pathname === "/pagos";
+
+    if (isDoctor && !isDoctorRoute && !isSharedRoute) {
       return NextResponse.redirect(new URL("/especialista", request.url));
     }
 
