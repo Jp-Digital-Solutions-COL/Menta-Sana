@@ -278,7 +278,7 @@ function SecretariaRow({
         {/* Edit button */}
         <button
           type="button"
-          title="Editar secretaria"
+          title="Editar asistente"
           onClick={() => { setEditOpen((v) => !v); setEditError(""); setEditSaved(false); if (!open) { setOpen(true); onOpen(sec.consultorio_id); } }}
           className={`h-6 w-6 flex items-center justify-center rounded-md border transition-colors shrink-0 ${editOpen ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"}`}
         >
@@ -352,7 +352,7 @@ function SecretariaRow({
               onSubmit={handleSaveEdit}
               className="border rounded-md p-2.5 space-y-2 bg-background"
             >
-              <p className="text-xs font-semibold text-muted-foreground">Editar secretaria</p>
+              <p className="text-xs font-semibold text-muted-foreground">Editar asistente</p>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs">Nombre</Label>
@@ -601,7 +601,7 @@ function SecretariasTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) 
           onClick={() => { setFormOpen((v) => !v); setSecError(""); }}
         >
           {formOpen ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-          {formOpen ? "Cancelar" : "Nueva secretaria"}
+          {formOpen ? "Cancelar" : "Nueva asistente"}
         </Button>
       </div>
 
@@ -685,7 +685,7 @@ function SecretariasTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) 
                 Creando usuario...
               </>
             ) : (
-              "Crear secretaria"
+              "Crear asistente"
             )}
           </Button>
         </form>
@@ -695,11 +695,11 @@ function SecretariasTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) 
       {loading ? (
         <div className="flex items-center justify-center py-10 text-muted-foreground gap-2">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Cargando secretarias...</span>
+          <span className="text-sm">Cargando asistentes...</span>
         </div>
       ) : loaded && filtered.length === 0 ? (
         <p className="text-xs text-muted-foreground py-4 text-center">
-          {search ? "Sin resultados." : "No hay secretarias registradas."}
+          {search ? "Sin resultados." : "No hay asistentes registradas."}
         </p>
       ) : (
         <div className="space-y-2">
@@ -1500,7 +1500,7 @@ function DoctoresTab({ consultorios }: { consultorios: ConsultorioAdmin[] }) {
 export default function TeamManager({ consultorios }: Props) {
   return (
     <div className="space-y-3">
-      <CollapsibleSection title="Secretarias">
+      <CollapsibleSection title="Asistentes">
         <SecretariasTab consultorios={consultorios} />
       </CollapsibleSection>
       <CollapsibleSection title="Especialistas">
