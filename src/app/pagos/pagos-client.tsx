@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { PagosData, DoctorItem } from "./types";
+import type { PagosData, DoctorItem, CuentaPorCobrar } from "./types";
 import { getPagosData } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
