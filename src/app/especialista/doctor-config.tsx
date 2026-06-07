@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, MapPin, Plus, UserPlus, Zap, Building2 } from "lucide-react";
+import { CalendarDays, MapPin, Plus, UserPlus, Zap, Building2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import HorariosSheet from "@/app/doctores/horarios-sheet";
 import SedesSheet from "@/app/doctores/sedes-sheet";
 import ConsultorioSheet from "./consultorio-sheet";
+import MensajesWhatsAppDialog from "@/components/mensajes-whatsapp-dialog";
 import type { Doctor } from "@/app/doctores/types";
 import type { ConsultorioConfig } from "@/app/configuracion/actions";
 
@@ -21,6 +22,7 @@ export default function DoctorConfig({ doctorId, doctorNombre, consultorioVirtua
   const [horariosOpen, setHorariosOpen] = useState(false);
   const [sedesOpen, setSedesOpen] = useState(false);
   const [consultorioOpen, setConsultorioOpen] = useState(false);
+  const [mensajesOpen, setMensajesOpen] = useState(false);
 
   const doctor = { id: doctorId, nombre: doctorNombre, consultorio_virtual: consultorioVirtual } as Doctor;
 
@@ -57,6 +59,10 @@ export default function DoctorConfig({ doctorId, doctorNombre, consultorioVirtua
           <Building2 className="h-4 w-4" />
           Configurar consultorio
         </Button>
+        <Button variant="outline" className="gap-2" onClick={() => setMensajesOpen(true)}>
+          <MessageCircle className="h-4 w-4 text-green-600" />
+          Mensajes de WhatsApp
+        </Button>
       </div>
 
       <HorariosSheet
@@ -71,6 +77,11 @@ export default function DoctorConfig({ doctorId, doctorNombre, consultorioVirtua
         open={consultorioOpen}
         onClose={() => setConsultorioOpen(false)}
         config={consultorioConfig}
+      />
+      <MensajesWhatsAppDialog
+        open={mensajesOpen}
+        onClose={() => setMensajesOpen(false)}
+        defaultTab="recordatorio"
       />
     </>
   );
